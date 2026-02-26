@@ -1,0 +1,16 @@
+# Google Cloud Build - イメージビルドのみ
+# 使い方: gcloud builds submit --config=cloudbuild.yaml .
+# シークレット付きデプロイは「デプロイ手順_GoogleCloud.md」の手順 B を実行
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/nutrition-app', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/nutrition-app']
+
+images:
+  - 'gcr.io/${PROJECT_ID}/nutrition-app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% set active_page = "pantry" %}
+
+{% block title %}食材からレシピ検索 - 栄養管理{% endblock %}
+{% block header_title %}🔍 食材チェッカー{% endblock %}
+{% block header_subtitle %}家にある食材でレシピを提案{% endblock %}
+
+{% block extra_style %}
+.search-area {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+}
+.search-label {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.ingredient-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.ing-chip {
+    padding: 8px 14px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.ing-chip.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.ing-chip:active { transform: scale(0.95); }
+
+.category-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin: 12px 0 6px;
+    padding-left: 2px;
+}
+.category-label:first-child { margin-top: 4px; }
+
+.search-input-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--primary); }
+
+.search-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.search-btn:active { background: #388E3C; }
+
+.result-card {
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.result-emoji {
+    font-size: 32px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.result-info { flex: 1; }
+.result-title { font-size: 15px; font-weight: 700; }
+.result-meta {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.nutrition-mini {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 2px;
+}
+
+.online-section { margin-top: 24px; }
+.online-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.online-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+.online-card:hover { opacity: 0.95; }
+.online-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.online-info { flex: 1; min-width: 0; }
+.online-title-text { font-size: 14px; font-weight: 700; }
+.online-meta { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+.online-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; }
+.loading-online { padding: 20px; text-align: center; color: var(--text-sub); }
+.no-online { padding: 16px; text-align: center; color: var(--text-sub); font-size: 13px; }
+.google-search-btn {
+    display: block;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #4285F4, #34A853);
+    color: white !important;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(66,133,244,0.3);
+}
+.google-search-btn:active { opacity: 0.9; }
+
+.match-bar {
+    height: 6px;
+    background: #E0E0E0;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+.match-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+.match-high { background: var(--primary); }
+.match-mid { background: #FFC107; }
+.match-low { background: #FF7043; }
+
+.match-label {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.missing-section {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #FFF3E0;
+    border-radius: 10px;
+    font-size: 12px;
+}
+.missing-title { font-weight: 700; margin-bottom: 4px; }
+.missing-item { color: #E65100; }
+
+.matched-section {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--primary);
+}
+
+.result-tips {
+    margin-top: 8px;
+    font-size: 12px;
+    padding: 8px 12px;
+    background: #FFF8E1;
+    border-radius: 8px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-sub);
+}
+.no-results .icon { font-size: 48px; margin-bottom: 12px; }
+
+.selected-count {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    text-align: right;
+    padding: 4px 0;
+}
+
+.results-area { min-height: 100px; }
+{% endblock %}
+
+{% block content %}
+<div class="search-area animate-in">
+    <div class="search-label">🏠 家にある食材を選んでください</div>
+
+    <div class="search-input-wrap">
+        <input type="text" class="search-input" id="filterInput" placeholder="食材名で絞り込み...">
+        <button class="search-btn" onclick="searchRecipes()">検索</button>
+    </div>
+
+    <div class="selected-count" id="selectedCount">0個選択中</div>
+
+    <div class="category-label">🍳 家にある食材を選んでタップ → 検索ボタン</div>
+    <div class="ingredient-grid" id="allIngredients">
+        {% for ing in all_ingredients %}
+        <div class="ing-chip" onclick="toggleIngredient(this)">{{ ing }}</div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="section-title online-section" id="onlineSection" style="display:none;">🌐 ネットのレシピ・リアルな情報</div>
+<div id="googleSearchLink" style="display:none; margin-bottom:12px;"></div>
+<div id="onlineResults"></div>
+
+<div class="section-title" id="localSection" style="display:none;">🍳 登録済みレシピ</div>
+<div class="results-area" id="resultsArea">
+    <div class="no-results" id="initialMessage">
+        <div class="icon">👆</div>
+        <p>食材を選んで「検索」を押してください</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleIngredient(chip) {
+    chip.classList.toggle('selected');
+    updateCount();
+}
+
+function updateCount() {
+    const count = document.querySelectorAll('.ing-chip.selected').length;
+    document.getElementById('selectedCount').textContent = count + '個選択中';
+}
+
+document.getElementById('filterInput').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.ing-chip').forEach(chip => {
+        chip.style.display = chip.textContent.toLowerCase().includes(query) || !query ? '' : 'none';
+    });
+});
+
+async function searchRecipes() {
+    const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
+        .map(c => c.textContent.trim());
+
+    if (selected.length === 0) {
+        document.getElementById('resultsArea').innerHTML =
+            '<div class="no-results"><div class="icon">👆</div><p>食材を1つ以上選んでください</p></div>';
+        document.getElementById('onlineSection').style.display = 'none';
+        document.getElementById('localSection').style.display = 'none';
+        document.getElementById('googleSearchLink').style.display = 'none';
+        return;
+    }
+
+    const query = selected.join(' ');
+    const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query + ' レシピ');
+
+    document.getElementById('onlineSection').style.display = 'block';
+    document.getElementById('localSection').style.display = 'block';
+    document.getElementById('initialMessage').style.display = 'none';
+
+    document.getElementById('googleSearchLink').style.display = 'block';
+    document.getElementById('googleSearchLink').innerHTML =
+        '<a href="' + googleUrl + '" target="_blank" rel="noopener" class="google-search-btn">🔍 Googleで「' + query + '」のレシピを検索（常に最新）</a>';
+    document.getElementById('onlineResults').innerHTML = '<div class="loading-online">🌐 検索中...</div>';
+
+    const res = await fetch('/api/match-recipes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({items: selected})
+    });
+    const recipes = await res.json();
+    renderResults(recipes);
+
+    try {
+        const onlineRes = await fetch('/api/search-online', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({items: selected})
+        });
+        const data = await onlineRes.json().catch(() => ({}));
+        const onlineRecipes = data.recipes || [];
+        if (onlineRecipes.length > 0) {
+            renderOnlineResults(onlineRecipes);
+        } else {
+            document.getElementById('onlineResults').innerHTML =
+                '<div class="no-online">上記の「Googleで検索」から最新のレシピを探せます。<br>英語圏のレシピDB（TheMealDB）にも該当がありませんでした。</div>';
+        }
+    } catch (e) {
+        document.getElementById('onlineResults').innerHTML =
+            '<div class="no-online">上記の「Googleで検索」ボタンから最新レシピを検索できます。</div>';
+    }
+}
+
+function renderOnlineResults(recipes) {
+    const area = document.getElementById('onlineResults');
+    if (!recipes.length) {
+        area.innerHTML = '<div class="no-online">ネットでマッチするレシピが見つかりませんでした。<br>別の食材を試してみてください。</div>';
+        return;
+    }
+    area.innerHTML = recipes.map(r => `
+        <a href="${r.url}" target="_blank" rel="noopener" class="online-card">
+            ${r.image ? `<img src="${r.image}" alt="" class="online-img">` : '<div class="online-img" style="background:#eee;"></div>'}
+            <div class="online-info">
+                <div class="online-title-text">${r.title}</div>
+                <div class="online-meta">${r.source} ${r.time ? '・' + r.time + '分' : ''}</div>
+                ${r.calories ? `<div class="online-nutrition">📊 ${r.calories}kcal / P${r.protein}g F${r.fat}g C${r.carbs}g</div>` : ''}
+            </div>
+        </a>
+    `).join('');
+}
+
+function renderResults(recipes) {
+    const area = document.getElementById('resultsArea');
+
+    if (!recipes.length) {
+        area.innerHTML = '<div class="no-results"><div class="icon">😅</div><p>マッチするレシピが見つかりませんでした</p></div>';
+        return;
+    }
+
+    let html = '';
+    recipes.forEach((r, i) => {
+        const matchClass = r.match_ratio >= 70 ? 'match-high' : r.match_ratio >= 40 ? 'match-mid' : 'match-low';
+        const matchText = r.match_ratio >= 70 ? '🎉 ほぼ揃ってる！' : r.match_ratio >= 40 ? '👍 あと少し！' : '📝 買い足し必要';
+
+        html += `
+        <div class="card animate-in" style="animation-delay:${i * 0.05}s">
+            <div class="result-card">
+                <div class="result-emoji">${r.emoji}</div>
+                <div class="result-info">
+                    <div class="result-title">${r.title}</div>
+                    <div class="result-meta">
+                        <span>⏱️ ${r.cooking_time_min}分</span>
+                        ${r.papa_snack ? '<span>🍺 おつまみ付き</span>' : ''}
+                        ${r.nutrition && r.nutrition.calories ? `<span>📊 ${r.nutrition.calories}kcal</span>` : ''}
+                    </div>
+                    ${r.nutrition && r.nutrition.calories ? `
+                    <div class="nutrition-mini">
+                        P ${r.nutrition.protein_g || '-'}g / F ${r.nutrition.fat_g || '-'}g / C ${r.nutrition.carbs_g || '-'}g
+                    </div>` : ''}
+
+                    <div class="match-bar"><div class="match-fill ${matchClass}" style="width:${r.match_ratio}%"></div></div>
+                    <div class="match-label" style="color:${r.match_ratio >= 70 ? 'var(--primary)' : r.match_ratio >= 40 ? '#F9A825' : '#E65100'}">${matchText}（食材一致 ${r.match_ratio}%）</div>
+
+                    ${r.matched.length ? `<div class="matched-section">✅ ${r.matched.join('、')}</div>` : ''}
+
+                    ${r.missing.length ? `
+                    <div class="missing-section">
+                        <div class="missing-title">🛒 買い足しが必要：</div>
+                        ${r.missing.map(m => `<span class="missing-item">${m.name}(${m.quantity})</span>`).join('、')}
+                    </div>` : ''}
+
+                    ${r.kid_tips ? `<div class="result-tips">👧 ${r.kid_tips}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    });
+
+    area.innerHTML = html;
+}
+</script>
+{% endblock %}

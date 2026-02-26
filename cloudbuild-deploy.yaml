@@ -1,0 +1,34 @@
+# Cloud Build - GitHub トリガー用（ビルド + デプロイ）
+# main ブランチへの push で自動実行されます
+# 前提: Secret Manager に google-credentials, google-token, cron-secret が登録済みであること
+
+steps:
+  # 1. Docker イメージをビルド＆プッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/nutrition-app', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/nutrition-app']
+
+  # 2. Cloud Run にデプロイ（シークレット・環境変数込み）
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - nutrition-app
+      - --image=gcr.io/${PROJECT_ID}/nutrition-app
+      - --region=asia-northeast1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-secrets=/app/secrets/credentials.json=google-credentials:latest,/app/secrets/token.json=google-token:latest
+      - --set-env-vars=GCS_BUCKET=${PROJECT_ID}-nutrition-data,CRON_SECRET=secret:cron-secret:latest
+      - --memory=512Mi
+      - --timeout=300
+      - --quiet
+
+images:
+  - 'gcr.io/${PROJECT_ID}/nutrition-app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

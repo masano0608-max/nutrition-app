@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+*.md
+.DS_Store
+*.command
+start_app.sh
+credentials.json
+token.json
+.env
+*.log

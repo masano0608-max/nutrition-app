@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% set active_page = "menu" %}
+
+{% block title %}今週の献立 - 栄養管理{% endblock %}
+{% block header_title %}🍽️ 今週の献立{% endblock %}
+{% block header_subtitle %}タップでレシピ詳細を表示{% endblock %}
+
+{% block extra_style %}
+.day-card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+}
+.day-emoji {
+    font-size: 36px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.day-info { flex: 1; min-width: 0; }
+.day-label {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+.day-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.day-meta {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.day-today {
+    border-left: 4px solid var(--primary);
+}
+.day-arrow {
+    color: var(--border);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.week-header {
+    text-align: center;
+    padding: 12px 0 4px;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+.tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.day-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; font-weight: 600; }
+{% endblock %}
+
+{% block content %}
+{% if plan %}
+<div class="week-header">{{ plan.filename.replace('.md','').replace('2026-W10_','') }}</div>
+
+{% for day in plan.days %}
+<div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s">
+    <a href="#day-{{ loop.index }}" class="day-card" onclick="toggleDetail(this, event)">
+        <div class="day-emoji">{{ day.emoji }}</div>
+        <div class="day-info">
+            <div class="day-label">{{ day.day_name }}{% if day.date %}（{{ day.date }}）{% endif %}</div>
+            <div class="day-title">{{ day.title }}</div>
+            <div class="day-meta">
+                {% if day.time_info %}<span>⏱️ {{ day.time_info }}</span>{% endif %}
+                {% if day.papa_snack %}<span>🍺 おつまみ有</span>{% endif %}
+                {% if day.nutrition and day.nutrition.calories %}<span>📊 {{ day.nutrition.calories }}kcal</span>{% endif %}
+            </div>
+            {% if day.nutrition and day.nutrition.calories %}
+            <div class="day-nutrition">P{{ day.nutrition.protein_g|default('-') }}g / F{{ day.nutrition.fat_g|default('-') }}g / C{{ day.nutrition.carbs_g|default('-') }}g（1人分目安）</div>
+            {% endif %}
+            {% if day.tags %}
+            <div class="tags-row">
+                {% for tag in day.tags %}
+                <span class="tag {% if '小麦粉' in tag %}badge-green{% elif '国産' in tag %}badge-orange{% else %}badge-blue{% endif %}">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="day-arrow">›</div>
+    </a>
+    <div class="day-detail" id="day-{{ loop.index }}" style="display:none;">
+        <div style="padding: 0 16px 16px; border-top: 1px solid var(--border);">
+            {% if day.ingredients %}
+            <div style="margin-top:12px;">
+                <div style="font-size:13px; font-weight:700; margin-bottom:6px;">📝 材料</div>
+                <div style="font-size:13px; color:var(--text-sub); line-height:1.6;">
+                    {{ day.ingredients }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if day.steps %}
+            <div style="margin-top:14px;">
+                <div style="font-size:13px; font-weight:700; margin-bottom:6px;">👩‍🍳 作り方</div>
+                {% for step in day.steps %}
+                <div style="font-size:13px; line-height:1.6; padding: 6px 0; {% if not loop.last %}border-bottom: 1px dashed var(--border);{% endif %}">
+                    {{ step }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if day.kid_tip %}
+            <div style="margin-top:14px; padding:10px 12px; background:#FFF8E1; border-radius:10px; font-size:12px;">
+                👧 <strong>子供ポイント：</strong>{{ day.kid_tip }}
+            </div>
+            {% endif %}
+
+            {% if day.papa_snack %}
+            <div style="margin-top:8px; padding:10px 12px; background:#E8F5E9; border-radius:10px; font-size:12px;">
+                🍺 <strong>パパおつまみ：</strong>{{ day.papa_snack }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div style="text-align:center; padding:40px 20px; color:var(--text-sub);">
+    <div style="font-size:48px; margin-bottom:16px;">📋</div>
+    <p>献立がまだありません</p>
+    <p style="font-size:13px; margin-top:8px;">generate_weekly_plan.py を実行してください</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDetail(el, e) {
+    e.preventDefault();
+    const card = el.closest('.card');
+    const detail = card.querySelector('.day-detail');
+    const arrow = card.querySelector('.day-arrow');
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        arrow.textContent = '⌄';
+    } else {
+        detail.style.display = 'none';
+        arrow.textContent = '›';
+    }
+}
+</script>
+{% endblock %}

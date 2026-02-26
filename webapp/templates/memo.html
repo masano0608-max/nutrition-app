@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% set active_page = "memo" %}
+
+{% block title %}家族メモ - 栄養管理{% endblock %}
+{% block header_title %}📝 家族メモ{% endblock %}
+{% block header_subtitle %}夫婦で共有・書き込みできるメモ{% endblock %}
+
+{% block extra_style %}
+.memo-add {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+}
+.memo-add label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.memo-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+}
+.memo-input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 16px;
+    min-height: 48px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.memo-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+.memo-add-btn {
+    padding: 14px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+}
+.memo-add-btn:active { background: #388E3C; }
+
+.author-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.author-tab {
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.author-tab.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.memo-list { margin-top: 8px; }
+.memo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: white;
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    min-height: 52px;
+}
+.memo-item.checked {
+    opacity: 0.6;
+}
+.memo-item.checked .memo-text {
+    text-decoration: line-through;
+    color: var(--text-sub);
+}
+.memo-check {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.memo-check.done {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+.memo-body { flex: 1; min-width: 0; }
+.memo-text {
+    font-size: 15px;
+    line-height: 1.5;
+    word-break: break-all;
+}
+.memo-meta {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 4px;
+}
+.memo-delete {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #FFEBEE;
+    color: #C62828;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.memo-delete:active { background: #FFCDD2; }
+
+.memo-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-sub);
+    font-size: 14px;
+}
+.memo-empty .icon { font-size: 48px; margin-bottom: 12px; }
+
+.memo-hint {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 12px;
+    padding: 12px;
+    background: #F5F5F5;
+    border-radius: 10px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="memo-add animate-in">
+    <label>✏️ メモを追加（ママ・パパどちらでも）</label>
+    <div class="author-tabs">
+        <button type="button" class="author-tab active" data-author="ママ">ママ</button>
+        <button type="button" class="author-tab" data-author="パパ">パパ</button>
+    </div>
+    <div class="memo-input-wrap">
+        <input type="text" class="memo-input" id="memoInput" placeholder="例：牛乳買い忘れた / 木曜はカレーに変更" maxlength="200" enterkeyhint="send">
+        <button type="button" class="memo-add-btn" id="addBtn">追加</button>
+    </div>
+</div>
+
+<div class="section-title">📋 メモ一覧</div>
+<div class="memo-list" id="memoList">
+    <div class="memo-empty" id="emptyState">
+        <div class="icon">📝</div>
+        <p>まだメモはありません</p>
+        <p style="font-size:12px; margin-top:6px;">上の欄から追加してください</p>
+    </div>
+</div>
+
+<div class="memo-hint">
+    <strong>📱 共有の仕方</strong><br><br>
+    <b>①</b> Finderで「子供達の栄養管理」フォルダを開く<br>
+    <b>②</b> 「アプリを起動.command」を<strong>ダブルクリック</strong><br>
+    <b>③</b> 表示されたURLを、スマホのブラウザに入力して開く<br>
+    <span style="font-size:11px;color:#888;">※スマホはMacと同じWi-Fiに接続</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentAuthor = 'ママ';
+
+document.querySelectorAll('.author-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.author-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAuthor = btn.dataset.author;
+    });
+});
+
+async function loadMemos() {
+    const res = await fetch('/api/memo');
+    const data = await res.json();
+    const board = data.boards?.main || { items: [] };
+    renderMemos(board.items || []);
+}
+
+function renderMemos(items) {
+    const list = document.getElementById('memoList');
+    const empty = document.getElementById('emptyState');
+    const entries = items.filter(i => i.text).reverse();
+
+    if (entries.length === 0) {
+        list.innerHTML = '<div class="memo-empty" id="emptyState"><div class="icon">📝</div><p>まだメモはありません</p><p style="font-size:12px; margin-top:6px;">上の欄から追加してください</p></div>';
+        return;
+    }
+
+    list.innerHTML = entries.map(item => `
+        <div class="memo-item ${item.checked ? 'checked' : ''}" data-id="${item.id}">
+            <div class="memo-check ${item.checked ? 'done' : ''}" onclick="toggleMemo('${item.id}')">${item.checked ? '✓' : ''}</div>
+            <div class="memo-body">
+                <div class="memo-text">${escapeHtml(item.text)}</div>
+                <div class="memo-meta">${item.author} ・ ${item.created_at || ''}</div>
+            </div>
+            <button type="button" class="memo-delete" onclick="deleteMemo('${item.id}')">×</button>
+        </div>
+    `).join('');
+}
+
+function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+async function addMemo() {
+    const input = document.getElementById('memoInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    await fetch('/api/memo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'add', text, author: currentAuthor, board_id: 'main' })
+    });
+    input.value = '';
+    loadMemos();
+}
+
+async function toggleMemo(id) {
+    await fetch('/api/memo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'toggle', id, board_id: 'main' })
+    });
+    loadMemos();
+}
+
+async function deleteMemo(id) {
+    if (!confirm('このメモを削除しますか？')) return;
+    await fetch('/api/memo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'delete', id, board_id: 'main' })
+    });
+    loadMemos();
+}
+
+document.getElementById('addBtn').addEventListener('click', addMemo);
+document.getElementById('memoInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addMemo(); }
+});
+
+loadMemos();
+setInterval(loadMemos, 15000);
+</script>
+{% endblock %}

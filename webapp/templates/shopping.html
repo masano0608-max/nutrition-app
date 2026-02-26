@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+{% set active_page = "shopping" %}
+
+{% block title %}買い物リスト - 栄養管理{% endblock %}
+{% block header_title %}🛒 買い物リスト{% endblock %}
+{% block header_subtitle %}チェックして買い忘れ防止{% endblock %}
+
+{% block extra_style %}
+.store-card { padding: 16px; }
+.store-name {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.store-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.item-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #F0F0F0;
+    gap: 10px;
+    transition: opacity 0.3s;
+}
+.item-row.checked { opacity: 0.4; text-decoration: line-through; }
+.item-row:last-child { border-bottom: none; }
+.item-check {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.2s;
+}
+.item-check.done {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-size: 14px;
+}
+.item-name { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.item-detail { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+.item-info { flex: 1; }
+
+.sale-banner {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.sale-banner strong { font-size: 15px; }
+
+.progress-bar {
+    background: var(--border);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0;
+}
+.progress-fill {
+    background: var(--primary);
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.progress-text {
+    font-size: 12px;
+    color: var(--text-sub);
+    text-align: center;
+}
+
+.route-card {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    padding: 16px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+}
+.route-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.route-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+}
+.route-num {
+    width: 24px;
+    height: 24px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.checklist-memo {
+    background: #FFF8E1;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+{% endblock %}
+
+{% block content %}
+<div class="sale-banner animate-in">
+    <strong>🔥 今週のお得情報</strong><br>
+    イオン感謝デー（5%OFF）&amp; オーケー鶏もも特売中！
+</div>
+
+<div class="route-card animate-in" style="animation-delay:0.05s">
+    <div class="route-title">🗺️ おすすめ買い回りルート</div>
+    <div class="route-step"><span class="route-num">1</span> オーケー新浦安（肉・冷凍・乾物）</div>
+    <div class="route-step"><span class="route-num">2</span> イオンスタイルMONA（野菜・日配品）★5%OFF</div>
+    <div class="route-step"><span class="route-num">3</span> 成城石井（無添加調味料 ※初回のみ）</div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<div class="progress-text" id="progressText">0 / 0 品 完了</div>
+
+<!-- 肉類 -->
+<div class="card animate-in" style="animation-delay:0.1s">
+    <div class="store-card">
+        <div class="store-name">🥩 肉類
+            <span class="store-badge badge-orange">国産必須</span>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">国産 鶏ひき肉</div>
+                <div class="item-detail">350g ｜ そぼろ丼＋豆腐ハンバーグ</div>
+                <div class="item-detail">📍 オーケー or イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">国産 鶏もも肉 ★特売</div>
+                <div class="item-detail">300g ｜ カレー＋オムライス</div>
+                <div class="item-detail">📍 オーケー（100g ¥150）</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">国産 豚こま肉</div>
+                <div class="item-detail">150g ｜ 肉じゃが</div>
+                <div class="item-detail">📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">無添加ウインナー（国産豚）</div>
+                <div class="item-detail">1袋 ｜ ナポリタン＋おつまみ</div>
+                <div class="item-detail">📍 イオン or 成城石井</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 魚 -->
+<div class="card animate-in" style="animation-delay:0.15s">
+    <div class="store-card">
+        <div class="store-name">🐟 魚類</div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">国産 生鮭</div>
+                <div class="item-detail">2〜3切れ ｜ ホイル焼き</div>
+                <div class="item-detail">📍 オーケー or イオン</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 野菜 -->
+<div class="card animate-in" style="animation-delay:0.2s">
+    <div class="store-card">
+        <div class="store-name">🥬 野菜
+            <span class="store-badge badge-green">葉物はイオンで</span>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">にんじん</div>
+                <div class="item-detail">3本 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">玉ねぎ</div>
+                <div class="item-detail">2個 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">ほうれん草</div>
+                <div class="item-detail">1袋 ｜ 📍 イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">ピーマン</div>
+                <div class="item-detail">2個 ｜ 📍 イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">キャベツ</div>
+                <div class="item-detail">1/4玉 ｜ 📍 イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">しめじ</div>
+                <div class="item-detail">1パック ｜ 📍 イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">じゃがいも</div>
+                <div class="item-detail">3個 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">ごぼう</div>
+                <div class="item-detail">1本（小） ｜ 📍 イオン</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">大葉・大根・生姜</div>
+                <div class="item-detail">大葉1p / 大根1/4 / 生姜1かけ ｜ 📍 イオン</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 日配品 -->
+<div class="card animate-in" style="animation-delay:0.25s">
+    <div class="store-card">
+        <div class="store-name">🥚 日配品
+            <span class="store-badge badge-blue">感謝デー5%OFF</span>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">卵</div>
+                <div class="item-detail">1パック（10個）｜ 📍 イオン ★5%OFF</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">絹ごし豆腐</div>
+                <div class="item-detail">2丁 ｜ 📍 イオン ★5%OFF</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">牛乳</div>
+                <div class="item-detail">500ml ｜ 📍 イオン ★5%OFF</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">とろけるチーズ・バター</div>
+                <div class="item-detail">チーズ1袋 / バター1箱 ｜ 📍 イオン ★5%OFF</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 缶詰・冷凍 -->
+<div class="card animate-in" style="animation-delay:0.3s">
+    <div class="store-card">
+        <div class="store-name">🥫 缶詰・冷凍食品</div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">コーンクリーム缶（無添加）</div>
+                <div class="item-detail">1缶 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">トマト缶</div>
+                <div class="item-detail">1缶 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">冷凍かぼちゃ</div>
+                <div class="item-detail">1袋 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">冷凍枝豆</div>
+                <div class="item-detail">1袋 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- グルテンフリー食材 -->
+<div class="card animate-in" style="animation-delay:0.35s">
+    <div class="store-card">
+        <div class="store-name">🌾 グルテンフリー食材
+            <span class="store-badge badge-green">小麦粉代替</span>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">米粉パスタ</div>
+                <div class="item-detail">200g ｜ 📍 イオン or 成城石井</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">おからパウダー</div>
+                <div class="item-detail">1袋 ｜ パン粉代替 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">米粉</div>
+                <div class="item-detail">1袋 ｜ とろみ付け用 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">カレー粉</div>
+                <div class="item-detail">1瓶 ｜ ルー代替 ｜ 📍 オーケー</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 無添加調味料 -->
+<div class="card animate-in" style="animation-delay:0.4s">
+    <div class="store-card">
+        <div class="store-name">🧂 無添加調味料
+            <span class="store-badge badge-orange">初回のみ購入</span>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">無添加コンソメ</div>
+                <div class="item-detail">前田家 or 光食品 ｜ 📍 成城石井</div>
+            </div>
+        </div>
+        <div class="item-row" onclick="toggleCheck(this)">
+            <div class="item-check"></div>
+            <div class="item-info">
+                <div class="item-name">無添加鶏がらスープ</div>
+                <div class="item-detail">光食品 有機チキンだし ｜ 📍 成城石井</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="checklist-memo">
+    ⚠️ <strong>忘れ物チェック</strong><br>
+    □ イオンカード or WAON<br>
+    □ オーケー割引カード<br>
+    □ エコバッグ<br>
+    □ このリスト（スマホ）
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleCheck(row) {
+    const check = row.querySelector('.item-check');
+    row.classList.toggle('checked');
+    check.classList.toggle('done');
+    check.textContent = check.classList.contains('done') ? '✓' : '';
+    updateProgress();
+    saveState();
+}
+
+function updateProgress() {
+    const total = document.querySelectorAll('.item-row').length;
+    const done = document.querySelectorAll('.item-row.checked').length;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = done + ' / ' + total + ' 品 完了';
+}
+
+function saveState() {
+    const states = [];
+    document.querySelectorAll('.item-row').forEach((row, i) => {
+        states.push(row.classList.contains('checked'));
+    });
+    localStorage.setItem('shoppingChecks', JSON.stringify(states));
+}
+
+function loadState() {
+    const saved = localStorage.getItem('shoppingChecks');
+    if (saved) {
+        const states = JSON.parse(saved);
+        document.querySelectorAll('.item-row').forEach((row, i) => {
+            if (states[i]) {
+                row.classList.add('checked');
+                row.querySelector('.item-check').classList.add('done');
+                row.querySelector('.item-check').textContent = '✓';
+            }
+        });
+    }
+    updateProgress();
+}
+
+window.addEventListener('load', loadState);
+</script>
+{% endblock %}
