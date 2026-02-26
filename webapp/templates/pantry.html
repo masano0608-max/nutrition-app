@@ -136,19 +136,24 @@
 .online-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; }
 .loading-online { padding: 20px; text-align: center; color: var(--text-sub); }
 .no-online { padding: 16px; text-align: center; color: var(--text-sub); font-size: 13px; }
-.google-search-btn {
+.recipe-search-link {
     display: block;
-    padding: 14px 16px;
-    background: linear-gradient(135deg, #4285F4, #34A853);
+    padding: 12px 14px;
     color: white !important;
     text-align: center;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
     text-decoration: none;
-    box-shadow: 0 2px 8px rgba(66,133,244,0.3);
+    margin-bottom: 8px;
 }
-.google-search-btn:active { opacity: 0.9; }
+.recipe-search-link:active { opacity: 0.9; }
+.recipe-search-link.google { background: linear-gradient(135deg, #4285F4, #34A853); }
+.recipe-search-link.cookpad { background: #2B9B2B; }
+.recipe-search-link.delish { background: #E53935; }
+.recipe-search-link.kurashiru { background: #FF6F00; }
+.recipe-search-link.rakuten { background: #BF0000; }
+.recipe-search-links-title { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; }
 
 .match-bar {
     height: 6px;
@@ -233,8 +238,8 @@
     </div>
 </div>
 
-<div class="section-title online-section" id="onlineSection" style="display:none;">🌐 ネットのレシピ・リアルな情報</div>
-<div id="googleSearchLink" style="display:none; margin-bottom:12px;"></div>
+<div class="section-title online-section" id="onlineSection" style="display:none;">🌐 日本のレシピを検索</div>
+<div id="recipeSearchLinks" style="display:none; margin-bottom:12px;"></div>
 <div id="onlineResults"></div>
 
 <div class="section-title" id="localSection" style="display:none;">🍳 登録済みレシピ</div>
@@ -274,20 +279,30 @@ async function searchRecipes() {
             '<div class="no-results"><div class="icon">👆</div><p>食材を1つ以上選んでください</p></div>';
         document.getElementById('onlineSection').style.display = 'none';
         document.getElementById('localSection').style.display = 'none';
-        document.getElementById('googleSearchLink').style.display = 'none';
+        document.getElementById('recipeSearchLinks').style.display = 'none';
         return;
     }
 
     const query = selected.join(' ');
-    const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query + ' レシピ');
+    const enc = encodeURIComponent(query);
+    const googleUrl = 'https://www.google.co.jp/search?q=' + encodeURIComponent(query + ' レシピ 日本人気');
+    const cookpadUrl = 'https://cookpad.com/search/' + enc;
+    const delishUrl = 'https://delishkitchen.tv/search?q=' + enc;
+    const kurashiruUrl = 'https://www.kurashiru.com/recipes?query=' + enc;
+    const rakutenUrl = 'https://recipe.rakuten.co.jp/search/' + enc + '/';
 
     document.getElementById('onlineSection').style.display = 'block';
     document.getElementById('localSection').style.display = 'block';
     document.getElementById('initialMessage').style.display = 'none';
 
-    document.getElementById('googleSearchLink').style.display = 'block';
-    document.getElementById('googleSearchLink').innerHTML =
-        '<a href="' + googleUrl + '" target="_blank" rel="noopener" class="google-search-btn">🔍 Googleで「' + query + '」のレシピを検索（常に最新）</a>';
+    document.getElementById('recipeSearchLinks').style.display = 'block';
+    document.getElementById('recipeSearchLinks').innerHTML =
+        '<div class="recipe-search-links-title">🇯🇵 「' + query + '」で日本のレシピを検索</div>' +
+        '<a href="' + googleUrl + '" target="_blank" rel="noopener" class="recipe-search-link google">🔍 Google（日本の人気レシピ）</a>' +
+        '<a href="' + cookpadUrl + '" target="_blank" rel="noopener" class="recipe-search-link cookpad">📖 クックパッド</a>' +
+        '<a href="' + delishUrl + '" target="_blank" rel="noopener" class="recipe-search-link delish">🍳 デリッシュキッチン</a>' +
+        '<a href="' + kurashiruUrl + '" target="_blank" rel="noopener" class="recipe-search-link kurashiru">📺 クラシル</a>' +
+        '<a href="' + rakutenUrl + '" target="_blank" rel="noopener" class="recipe-search-link rakuten">🛒 楽天レシピ</a>';
     document.getElementById('onlineResults').innerHTML = '<div class="loading-online">🌐 検索中...</div>';
 
     const res = await fetch('/api/match-recipes', {
@@ -310,11 +325,11 @@ async function searchRecipes() {
             renderOnlineResults(onlineRecipes);
         } else {
             document.getElementById('onlineResults').innerHTML =
-                '<div class="no-online">上記の「Googleで検索」から最新のレシピを探せます。<br>英語圏のレシピDB（TheMealDB）にも該当がありませんでした。</div>';
+                '<div class="no-online">上記の日本のレシピサイト（クックパッド・デリッシュキッチン・クラシル・楽天レシピ）で検索してみてください。</div>';
         }
     } catch (e) {
         document.getElementById('onlineResults').innerHTML =
-            '<div class="no-online">上記の「Googleで検索」ボタンから最新レシピを検索できます。</div>';
+            '<div class="no-online">上記の日本のレシピサイトから検索できます。</div>';
     }
 }
 

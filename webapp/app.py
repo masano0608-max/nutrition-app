@@ -294,7 +294,7 @@ def api_search_online():
         ingredients = []
     try:
         from webapp.recipe_search import search_online_recipes
-        results = search_online_recipes(ingredients, max_results=8)
+        results = search_online_recipes(ingredients, max_results=12)
         return jsonify({"recipes": results})
     except Exception as e:
         return jsonify({"recipes": [], "error": str(e)}), 200

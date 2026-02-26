@@ -190,7 +190,7 @@ def _search_edamam(ingredients: list[str], max_results: int) -> list[dict]:
     return recipes
 
 
-def search_online_recipes(ingredients: list[str], max_results: int = 8) -> list[dict]:
+def search_online_recipes(ingredients: list[str], max_results: int = 12) -> list[dict]:
     """
     食材からネットのレシピを検索
     Edamam設定時はEdamamを優先、未設定時はTheMealDB（完全無料）を使用
