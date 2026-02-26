@@ -13,6 +13,28 @@
 set -e
 cd "$(dirname "$0")"
 
+# アカウントが選択されていない場合の対処
+CURRENT_ACCOUNT=$(gcloud config get-value account 2>/dev/null || true)
+if [ -z "$CURRENT_ACCOUNT" ]; then
+  echo "gcloud のアカウントを設定しています..."
+  FIRST_ACCOUNT=$(gcloud auth list --format="value(account)" 2>/dev/null | head -1)
+  if [ -n "$FIRST_ACCOUNT" ]; then
+    gcloud config set account "$FIRST_ACCOUNT"
+    echo "   アカウントを選択しました: $FIRST_ACCOUNT"
+  else
+    echo ""
+    echo "❌ エラー: gcloud にアカウントが設定されていません"
+    echo ""
+    echo "以下のコマンドを実行してログインしてください:"
+    echo "  gcloud auth login"
+    echo ""
+    echo "ブラウザが開いたら、Google アカウントでログインし、許可をクリックしてください。"
+    echo "完了したら、このスクリプトをもう一度実行してください。"
+    echo ""
+    exit 1
+  fi
+fi
+
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
 if [ -z "$PROJECT_ID" ]; then
   echo "プロジェクトIDを入力:"
