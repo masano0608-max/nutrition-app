@@ -1,0 +1,15 @@
+# gcloud builds submit 時にアップロードから除外
+# 注意: webapp/, data/, recipes/ は含める（除外しない）
+venv/
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.DS_Store
+*.command
+start_app.sh
+credentials.json
+token.json
+.env
+*.log

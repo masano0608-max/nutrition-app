@@ -62,11 +62,40 @@
 }
 .tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .day-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; font-weight: 600; }
+.pattern-tabs {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    padding: 8px 0 12px; margin-bottom: 4px;
+}
+.pattern-tab {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: var(--text-sub);
+    background: var(--bg-card); border: 2px solid var(--border);
+}
+.pattern-tab:hover { color: var(--primary); border-color: var(--primary); }
+.pattern-tab.active { color: white; background: var(--primary); border-color: var(--primary); }
+.change-menu-btn { margin-top: 10px; font-size: 12px; padding: 6px 12px; }
+.alt-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.alt-modal.open { display: flex; }
+.alt-modal-inner { background: white; border-radius: 16px; max-width: 360px; width: 100%; max-height: 80vh; overflow-y: auto; }
+.alt-modal-title { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; }
+.alt-list { padding: 8px; }
+.alt-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; }
+.alt-item:hover { background: var(--bg-page); }
+.alt-item .emoji { font-size: 28px; }
+.alt-item .info { flex: 1; }
+.alt-item .title { font-weight: 600; }
+.alt-item .meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 {% endblock %}
 
 {% block content %}
+<div class="pattern-tabs">
+    <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
+    <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
+    <a href="?pattern=yoshoku" class="pattern-tab {% if current_pattern == 'yoshoku' %}active{% endif %}">洋食</a>
+    <a href="?pattern=short" class="pattern-tab {% if current_pattern == 'short' %}active{% endif %}">時短</a>
+</div>
 {% if plan %}
-<div class="week-header">{{ plan.filename.replace('.md','').replace('2026-W10_','') }}</div>
+<div class="week-header">{{ plan.filename.replace('.md','').replace('2026-W10_','').replace('pattern_','') }}</div>
 
 {% for day in plan.days %}
 <div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s">
@@ -81,7 +110,7 @@
                 {% if day.nutrition and day.nutrition.calories %}<span>📊 {{ day.nutrition.calories }}kcal</span>{% endif %}
             </div>
             {% if day.nutrition and day.nutrition.calories %}
-            <div class="day-nutrition">P{{ day.nutrition.protein_g|default('-') }}g / F{{ day.nutrition.fat_g|default('-') }}g / C{{ day.nutrition.carbs_g|default('-') }}g（1人分目安）</div>
+            <div class="day-nutrition">P{{ day.nutrition.protein_g|default('-') }}g / F{{ day.nutrition.fat_g|default('-') }}g / C{{ day.nutrition.carbs_g|default('-') }}g{% if day.nutrition.iron_mg or day.nutrition.folate_mcg %} ｜ 鉄{{ day.nutrition.iron_mg|default('-') }}mg 葉酸{{ day.nutrition.folate_mcg|default('-') }}μg{% endif %}（1人分目安）</div>
             {% endif %}
             {% if day.tags %}
             <div class="tags-row">
@@ -126,6 +155,10 @@
                 🍺 <strong>パパおつまみ：</strong>{{ day.papa_snack }}
             </div>
             {% endif %}
+
+            {% if day.recipe_id %}
+            <button type="button" class="btn btn-outline change-menu-btn" data-day-index="{{ loop.index0 }}" data-recipe-id="{{ day.recipe_id }}" data-day-name="{{ day.day_name }}" data-day-date="{{ day.date }}">この日のメニューを変更</button>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -138,6 +171,13 @@
     <p style="font-size:13px; margin-top:8px;">generate_weekly_plan.py を実行してください</p>
 </div>
 {% endif %}
+
+<div class="alt-modal" id="altModal" role="dialog">
+    <div class="alt-modal-inner">
+        <div class="alt-modal-title" id="altModalTitle">代替メニューを選ぶ</div>
+        <div class="alt-list" id="altList"></div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -155,5 +195,89 @@ function toggleDetail(el, e) {
         arrow.textContent = '›';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('altModal');
+    const altList = document.getElementById('altList');
+    const altTitle = document.getElementById('altModalTitle');
+    if (!modal) return;
+
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('.change-menu-btn');
+        if (!btn) return;
+            e.stopPropagation();
+            const dayIndex = btn.dataset.dayIndex;
+            const recipeId = btn.dataset.recipeId;
+            const dayName = btn.dataset.dayName || '月曜日';
+            const dayDate = btn.dataset.dayDate || '';
+            const params = new URLSearchParams({ day: dayIndex, current: recipeId, day_name: dayName, day_date: dayDate });
+            altTitle.textContent = dayName + (dayDate ? ' (' + dayDate + ') の代替メニュー' : 'の代替メニュー');
+            altList.innerHTML = '<div style="padding:20px;text-align:center;">読み込み中...</div>';
+            modal.classList.add('open');
+
+            fetch('/api/alternatives?' + params.toString())
+                .then(function(r) { return r.json(); })
+                .then(function(items) {
+                    if (!items.length) {
+                        altList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-sub);">候補がありません</div>';
+                        return;
+                    }
+                    altList.innerHTML = items.map(function(d) {
+                        var n = d.nutrition || {};
+                        var cal = n.calories ? n.calories + 'kcal' : '';
+                        var nStr = (n.protein_g || n.fat_g || n.carbs_g) ? 'P' + (n.protein_g||'-') + ' F' + (n.fat_g||'-') + ' C' + (n.carbs_g||'-') : '';
+                        if (n.iron_mg || n.folate_mcg) nStr += ' 鉄' + (n.iron_mg||'-') + 'mg 葉酸' + (n.folate_mcg||'-') + 'μg';
+                        return '<div class="alt-item" data-day-json="' + encodeURIComponent(JSON.stringify(d)) + '">' +
+                            '<span class="emoji">' + (d.emoji || '🍽️') + '</span>' +
+                            '<div class="info"><div class="title">' + (d.title || '') + '</div>' +
+                            '<div class="meta">' + (d.time_info || '') + (cal ? ' · ' + cal : '') + (nStr ? ' · ' + nStr : '') + '</div></div></div>';
+                    }).join('');
+                    altList.querySelectorAll('.alt-item').forEach(function(el) {
+                        el.addEventListener('click', function() {
+                            try {
+                                var d = JSON.parse(decodeURIComponent(el.dataset.dayJson));
+                                var card = btn.closest('.card');
+                                var dayCard = card.querySelector('.day-card');
+                                var dayInfo = dayCard.querySelector('.day-info');
+                                dayCard.querySelector('.day-emoji').textContent = d.emoji || '🍽️';
+                                dayInfo.querySelector('.day-label').textContent = d.day_name + (d.date ? '（' + d.date + '）' : '');
+                                dayInfo.querySelector('.day-title').textContent = d.title || '';
+                                var meta = dayInfo.querySelector('.day-meta');
+                                meta.innerHTML = (d.time_info ? '<span>⏱️ ' + d.time_info + '</span>' : '') + (d.papa_snack ? '<span>🍺 おつまみ有</span>' : '') + (d.nutrition && d.nutrition.calories ? '<span>📊 ' + d.nutrition.calories + 'kcal</span>' : '');
+                                var nutDiv = dayInfo.querySelector('.day-nutrition');
+                                if (d.nutrition && d.nutrition.calories) {
+                                    var nut = d.nutrition;
+                                    nutDiv.innerHTML = 'P' + (nut.protein_g||'-') + 'g / F' + (nut.fat_g||'-') + 'g / C' + (nut.carbs_g||'-') + 'g' + (nut.iron_mg || nut.folate_mcg ? ' ｜ 鉄' + (nut.iron_mg||'-') + 'mg 葉酸' + (nut.folate_mcg||'-') + 'μg' : '') + '（1人分目安）';
+                                    nutDiv.style.display = '';
+                                } else { nutDiv.style.display = 'none'; }
+                                var tagsRow = dayInfo.querySelector('.tags-row');
+                                if (tagsRow && d.tags && d.tags.length) {
+                                    tagsRow.innerHTML = d.tags.map(function(t) {
+                                        var c = 'badge-blue';
+                                        if ((t+'').indexOf('小麦粉')>=0) c='badge-green'; else if ((t+'').indexOf('国産')>=0) c='badge-orange';
+                                        return '<span class="tag ' + c + '">' + t + '</span>';
+                                    }).join('');
+                                    tagsRow.style.display = '';
+                                } else if (tagsRow) { tagsRow.style.display = 'none'; }
+                                var detail = card.querySelector('.day-detail > div');
+                                var parts = [];
+                                if (d.ingredients) parts.push('<div style="margin-top:12px;"><div style="font-size:13px;font-weight:700;margin-bottom:6px;">📝 材料</div><div style="font-size:13px;color:var(--text-sub);line-height:1.6;">' + d.ingredients + '</div></div>');
+                                if (d.steps && d.steps.length) parts.push('<div style="margin-top:14px;"><div style="font-size:13px;font-weight:700;margin-bottom:6px;">👩‍🍳 作り方</div>' + d.steps.map(function(s,i,a){ return '<div style="font-size:13px;line-height:1.6;padding:6px 0;' + (i<a.length-1 ? 'border-bottom:1px dashed var(--border);' : '') + '">' + s + '</div>'; }).join('') + '</div>');
+                                if (d.kid_tip) parts.push('<div style="margin-top:14px;padding:10px 12px;background:#FFF8E1;border-radius:10px;font-size:12px;">👧 <strong>子供ポイント：</strong>' + d.kid_tip + '</div>');
+                                if (d.papa_snack) parts.push('<div style="margin-top:8px;padding:10px 12px;background:#E8F5E9;border-radius:10px;font-size:12px;">🍺 <strong>パパおつまみ：</strong>' + d.papa_snack + '</div>');
+                                if (d.recipe_id) parts.push('<button type="button" class="btn btn-outline change-menu-btn" data-day-index="' + dayIndex + '" data-recipe-id="' + (d.recipe_id||'') + '" data-day-name="' + (d.day_name||'') + '" data-day-date="' + (d.date||'') + '">この日のメニューを変更</button>');
+                                detail.innerHTML = parts.join('');
+                                modal.classList.remove('open');
+                            } catch (err) { console.error(err); }
+                        });
+                    });
+                })
+                .catch(function() { altList.innerHTML = '<div style="padding:20px;text-align:center;color:red;">読み込みに失敗しました</div>'; });
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.classList.remove('open');
+    });
+});
 </script>
 {% endblock %}

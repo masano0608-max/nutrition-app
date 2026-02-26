@@ -377,7 +377,7 @@ function renderResults(recipes) {
                     </div>
                     ${r.nutrition && r.nutrition.calories ? `
                     <div class="nutrition-mini">
-                        P ${r.nutrition.protein_g || '-'}g / F ${r.nutrition.fat_g || '-'}g / C ${r.nutrition.carbs_g || '-'}g
+                        P ${r.nutrition.protein_g || '-'}g / F ${r.nutrition.fat_g || '-'}g / C ${r.nutrition.carbs_g || '-'}g ｜ 鉄${r.nutrition.iron_mg || '-'}mg 葉酸${r.nutrition.folate_mcg || '-'}μg
                     </div>` : ''}
 
                     <div class="match-bar"><div class="match-fill ${matchClass}" style="width:${r.match_ratio}%"></div></div>

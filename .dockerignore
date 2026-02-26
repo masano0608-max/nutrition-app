@@ -3,7 +3,9 @@ __pycache__/
 *.pyc
 .git/
 .gitignore
+# *.md を除外すると recipes/weekly_plans/*.md も消えるため、recipes 内は復元
 *.md
+!recipes/**/*.md
 .DS_Store
 *.command
 start_app.sh

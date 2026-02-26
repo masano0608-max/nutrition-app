@@ -10,7 +10,9 @@
 
 import json
 import os
+import random
 import re
+from datetime import date, timedelta
 from pathlib import Path
 
 try:
@@ -88,6 +90,105 @@ def get_latest_meal_plan():
                     day["nutrition"] = _match_recipe_nutrition(day.get("title", ""), recipes)
             return plan
     return None
+
+
+# 献立パターン: タンパク質の並び順（バリエーション増）
+PATTERN_PROTEIN_ORDER = {
+    "default": ["chicken", "fish", "pork", "tofu", "egg", "chicken", "fish"],
+    "wafu": ["fish", "tofu", "egg", "fish", "chicken", "tofu", "pork"],
+    "yoshoku": ["pork", "chicken", "egg", "pork", "chicken", "tofu", "fish"],
+    "short": None,  # 時短は調理時間でフィルタ
+}
+
+
+def select_weekly_menu_by_pattern(recipes: list, pattern: str = "default") -> list:
+    """パターンに応じて7日分のメニューを選択（バリエーション増）"""
+    by_protein = {}
+    for r in recipes:
+        protein = r.get("main_protein", "other")
+        by_protein.setdefault(protein, []).append(r)
+
+    if pattern == "short":
+        # 時短: 15分以下を優先
+        quick = [r for r in recipes if r.get("cooking_time_min", 99) <= 15]
+        pool = quick if len(quick) >= 7 else recipes
+    else:
+        pool = recipes
+
+    order = PATTERN_PROTEIN_ORDER.get(pattern, PATTERN_PROTEIN_ORDER["default"])
+    if pattern != "short":
+        random.shuffle(order)
+    else:
+        order = ["chicken", "egg", "tofu", "fish", "pork", "chicken", "tofu"]
+
+    selected = []
+    used_ids = set()
+    for protein in order:
+        candidates = [r for r in by_protein.get(protein, pool) if r["id"] not in used_ids]
+        if not candidates:
+            candidates = [r for r in pool if r["id"] not in used_ids]
+        if candidates:
+            choice = random.choice(candidates)
+            selected.append(choice)
+            used_ids.add(choice["id"])
+
+    while len(selected) < 7:
+        remaining = [r for r in pool if r["id"] not in used_ids]
+        if remaining:
+            choice = random.choice(remaining)
+            selected.append(choice)
+            used_ids.add(choice["id"])
+        else:
+            break
+
+    return selected[:7]
+
+
+def _recipe_to_day(recipe: dict, day_name: str, day_date: str) -> dict:
+    """レシピを日データ形式に変換"""
+    ingredients = recipe.get("ingredients", [])
+    ing_text = "、".join(f"{i['name']} {i.get('quantity', '')}" for i in ingredients)
+    kid_tips = recipe.get("kid_tips", [])
+    kid_tip = kid_tips[0] if isinstance(kid_tips, list) and kid_tips else (kid_tips if isinstance(kid_tips, str) else "")
+    papa = recipe.get("papa_snack", {})
+    papa_txt = ""
+    if isinstance(papa, dict) and papa.get("title"):
+        papa_txt = f"{papa.get('title', '')} {papa.get('description', '')}".strip()
+    elif isinstance(papa, str):
+        papa_txt = papa
+    return {
+        "day_name": day_name,
+        "title": recipe.get("title", ""),
+        "emoji": recipe.get("emoji", "🍽️"),
+        "date": day_date,
+        "time_info": f"{recipe.get('cooking_time_min', 20)}分",
+        "tags": recipe.get("nutrition_tags", []),
+        "ingredients": ing_text,
+        "steps": recipe.get("steps", []),
+        "kid_tip": kid_tip,
+        "papa_snack": papa_txt,
+        "nutrition": recipe.get("nutrition", {}),
+        "recipe_id": recipe.get("id", ""),
+    }
+
+
+def get_meal_plan_by_pattern(pattern: str = "default"):
+    """パターンに応じた献立を生成"""
+    recipes = load_recipes()
+    if not recipes:
+        return None
+    selected = select_weekly_menu_by_pattern(recipes, pattern)
+    day_names = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"]
+    today = date.today()
+    days_to_monday = (7 - today.weekday()) % 7
+    if days_to_monday == 0:
+        days_to_monday = 7
+    week_start = today + timedelta(days=days_to_monday)
+    days = []
+    for i, rec in enumerate(selected):
+        d = week_start + timedelta(days=i)
+        days.append(_recipe_to_day(rec, day_names[i], d.strftime("%m/%d")))
+    return {"filename": f"pattern_{pattern}.md", "days": days, "pattern": pattern}
 
 
 def parse_meal_plan(path):
@@ -249,8 +350,58 @@ def match_recipes(pantry_items):
 
 @app.route("/")
 def index():
-    plan = get_latest_meal_plan()
-    return render_template("index.html", plan=plan)
+    pattern = request.args.get("pattern", "default")
+    if pattern in ("wafu", "yoshoku", "short"):
+        plan = get_meal_plan_by_pattern(pattern)
+    else:
+        plan = get_latest_meal_plan()
+        if plan:
+            plan["pattern"] = "default"
+    return render_template("index.html", plan=plan, current_pattern=pattern)
+
+
+@app.route("/api/meal-plan")
+def api_meal_plan():
+    """パターン指定で献立を取得（JSON）"""
+    pattern = request.args.get("pattern", "default")
+    if pattern in ("wafu", "yoshoku", "short"):
+        plan = get_meal_plan_by_pattern(pattern)
+    else:
+        plan = get_latest_meal_plan()
+    if not plan:
+        return jsonify({"error": "献立がありません"}), 404
+    if "pattern" not in plan:
+        plan["pattern"] = pattern
+    return jsonify(plan)
+
+
+@app.route("/api/alternatives")
+def api_alternatives():
+    """指定日の代替メニュー候補を返す（カード差し替え用の完全な日データ付き）"""
+    day_index = int(request.args.get("day", 0))
+    current_recipe_id = request.args.get("current", "")
+    day_name = request.args.get("day_name", "月曜日")
+    day_date = request.args.get("day_date", "")
+    recipes = load_recipes()
+    if not recipes:
+        return jsonify([])
+    day_names = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"]
+    if 0 <= day_index < 7:
+        day_name = day_names[day_index]
+    current = next((r for r in recipes if r["id"] == current_recipe_id), None)
+    protein = current.get("main_protein", "other") if current else "other"
+    by_protein = {}
+    for r in recipes:
+        by_protein.setdefault(r.get("main_protein", "other"), []).append(r)
+    candidates = [r for r in by_protein.get(protein, recipes) if r["id"] != current_recipe_id]
+    if len(candidates) < 4:
+        extra = [r for r in recipes if r["id"] != current_recipe_id and r not in candidates][:4 - len(candidates)]
+        candidates = (candidates + extra)[:4]
+    else:
+        random.shuffle(candidates)
+        candidates = candidates[:4]
+    result = [_recipe_to_day(r, day_name, day_date) for r in candidates]
+    return jsonify(result)
 
 
 @app.route("/shopping")
