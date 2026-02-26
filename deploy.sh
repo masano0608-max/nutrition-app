@@ -65,7 +65,7 @@ gcloud run deploy nutrition-app \
   --region asia-northeast1 \
   --platform managed \
   --allow-unauthenticated \
-  --set-secrets="/app/secrets/credentials.json=google-credentials:latest,/app/secrets/token.json=google-token:latest" \
+  --set-secrets="/app/secrets/credentials/credentials.json=google-credentials:latest,/app/secrets/token/token.json=google-token:latest" \
   --set-env-vars="GCS_BUCKET=${BUCKET_NAME},CRON_SECRET=${CRON_SECRET}" \
   --memory 512Mi \
   --timeout 300 \

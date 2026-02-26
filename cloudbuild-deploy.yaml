@@ -21,7 +21,7 @@ steps:
       - --region=asia-northeast1
       - --platform=managed
       - --allow-unauthenticated
-      - --set-secrets=/app/secrets/credentials.json=google-credentials:latest,/app/secrets/token.json=google-token:latest
+      - --set-secrets=/app/secrets/credentials/credentials.json=google-credentials:latest,/app/secrets/token/token.json=google-token:latest
       - --set-env-vars=GCS_BUCKET=${PROJECT_ID}-nutrition-data,CRON_SECRET=secret:cron-secret:latest
       - --memory=512Mi
       - --timeout=300

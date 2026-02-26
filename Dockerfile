@@ -20,10 +20,10 @@ COPY recipes/ ./recipes/
 
 # credentials.json / token.json は Cloud Run のシークレットでマウント
 # フォールバック用の空ディレクトリ
-RUN mkdir -p /app/secrets
+RUN mkdir -p /app/secrets/credentials /app/secrets/token
 
-ENV GOOGLE_CREDENTIALS_PATH=/app/secrets/credentials.json
-ENV GOOGLE_TOKEN_PATH=/app/secrets/token.json
+ENV GOOGLE_CREDENTIALS_PATH=/app/secrets/credentials/credentials.json
+ENV GOOGLE_TOKEN_PATH=/app/secrets/token/token.json
 ENV PORT=8080
 
 EXPOSE 8080
