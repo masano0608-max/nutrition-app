@@ -274,12 +274,15 @@ function updateCount() {
     document.getElementById('selectedCount').textContent = count + '個選択中';
 }
 
-document.getElementById('customIngredient').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addCustomIngredient(true);
-    }
-});
+const customInputEl = document.getElementById('customIngredient');
+if (customInputEl) {
+    customInputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomIngredient(true);
+        }
+    });
+}
 
 function addCustomIngredient(searchAfter) {
     const input = document.getElementById('customIngredient');
@@ -303,7 +306,8 @@ function addCustomIngredient(searchAfter) {
 async function searchRecipes() {
     const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
         .map(c => c.textContent.trim());
-    const freeInput = document.getElementById('freeInput').value.trim();
+    const freeEl = document.getElementById('freeInput');
+    const freeInput = freeEl ? freeEl.value.trim() : '';
     const typed = freeInput
         ? freeInput.split(/[\s、,]+/).map(s => s.trim()).filter(Boolean)
         : [];
@@ -338,13 +342,18 @@ async function searchRecipes() {
         '<a href="' + delishUrl + '" target="_blank" rel="noopener" class="recipe-search-link delish">🍳 デリッシュキッチン</a>' +
         '<a href="' + kurashiruUrl + '" target="_blank" rel="noopener" class="recipe-search-link kurashiru">📺 クラシル</a>' +
         '<a href="' + rakutenUrl + '" target="_blank" rel="noopener" class="recipe-search-link rakuten">🛒 楽天レシピ</a>';
-    const res = await fetch('/api/match-recipes', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({items: allItems})
-    });
-    const recipes = await res.json();
-    renderResults(recipes);
+    try {
+        const res = await fetch('/api/match-recipes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({items: allItems})
+        });
+        const recipes = await res.json();
+        renderResults(recipes);
+    } catch (e) {
+        document.getElementById('resultsArea').innerHTML =
+            '<div class="no-results"><div class="icon">⚠️</div><p>検索に失敗しました。通信状況を確認してください。</p></div>';
+    }
 }
 
 function renderResults(recipes) {
