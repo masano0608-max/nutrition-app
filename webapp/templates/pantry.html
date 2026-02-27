@@ -258,9 +258,15 @@
 
 {% block scripts %}
 <script>
+let searchTimer = null;
+function scheduleSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(searchRecipes, 120);
+}
 function toggleIngredient(chip) {
     chip.classList.toggle('selected');
     updateCount();
+    scheduleSearch();
 }
 
 function updateCount() {
