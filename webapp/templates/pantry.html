@@ -54,6 +54,7 @@
     gap: 8px;
     margin-bottom: 14px;
 }
+.search-input-wrap.secondary { margin-top: -4px; }
 .search-input {
     flex: 1;
     padding: 10px 14px;
@@ -227,6 +228,10 @@
         <input type="text" class="search-input" id="filterInput" placeholder="食材名で絞り込み...">
         <button class="search-btn" onclick="searchRecipes()">検索</button>
     </div>
+    <div class="search-input-wrap secondary">
+        <input type="text" class="search-input" id="customIngredient" placeholder="一覧に無い食材を追加...">
+        <button class="search-btn" onclick="addCustomIngredient(true)">追加して検索</button>
+    </div>
 
     <div class="selected-count" id="selectedCount">0個選択中</div>
 
@@ -269,6 +274,32 @@ document.getElementById('filterInput').addEventListener('input', function() {
         chip.style.display = chip.textContent.toLowerCase().includes(query) || !query ? '' : 'none';
     });
 });
+
+document.getElementById('customIngredient').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomIngredient(true);
+    }
+});
+
+function addCustomIngredient(searchAfter) {
+    const input = document.getElementById('customIngredient');
+    const name = input.value.trim();
+    if (!name) return;
+    const existing = Array.from(document.querySelectorAll('.ing-chip')).find(c => c.textContent.trim() === name);
+    const chip = existing || (() => {
+        const c = document.createElement('div');
+        c.className = 'ing-chip';
+        c.textContent = name;
+        c.onclick = function() { toggleIngredient(c); };
+        document.getElementById('allIngredients').prepend(c);
+        return c;
+    })();
+    chip.classList.add('selected');
+    input.value = '';
+    updateCount();
+    if (searchAfter) searchRecipes();
+}
 
 async function searchRecipes() {
     const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
