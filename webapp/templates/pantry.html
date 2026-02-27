@@ -54,7 +54,8 @@
     gap: 8px;
     margin-bottom: 14px;
 }
-.search-input-wrap.secondary { margin-top: -4px; }
+.search-input-wrap.secondary { margin-top: -6px; }
+.search-input-wrap.compact { margin-bottom: 8px; }
 .search-input {
     flex: 1;
     padding: 10px 14px;
@@ -222,20 +223,20 @@
 
 {% block content %}
 <div class="search-area animate-in">
-    <div class="search-label">🏠 家にある食材を選んでください</div>
+    <div class="search-label">🥕 食材を入力して検索</div>
 
-    <div class="search-input-wrap">
-        <input type="text" class="search-input" id="filterInput" placeholder="食材名で絞り込み...">
+    <div class="search-input-wrap compact">
+        <input type="text" class="search-input" id="freeInput" placeholder="例: 鶏むね ほうれん草 たまご（スペース/、区切り）">
         <button class="search-btn" onclick="searchRecipes()">検索</button>
     </div>
     <div class="search-input-wrap secondary">
-        <input type="text" class="search-input" id="customIngredient" placeholder="一覧に無い食材を追加...">
-        <button class="search-btn" onclick="addCustomIngredient(true)">追加して検索</button>
+        <input type="text" class="search-input" id="customIngredient" placeholder="一覧から選ばずに1つ追加...">
+        <button class="search-btn" onclick="addCustomIngredient(true)">追加</button>
     </div>
 
     <div class="selected-count" id="selectedCount">0個選択中</div>
 
-    <div class="category-label">🍳 家にある食材を選んでタップ → 検索ボタン</div>
+    <div class="category-label">🍳 一覧から選ぶ（タップで追加）</div>
     <div class="ingredient-grid" id="allIngredients">
         {% for ing in all_ingredients %}
         <div class="ing-chip" onclick="toggleIngredient(this)">{{ ing }}</div>
@@ -245,7 +246,6 @@
 
 <div class="section-title online-section" id="onlineSection" style="display:none;">🌐 日本のレシピを検索</div>
 <div id="recipeSearchLinks" style="display:none; margin-bottom:12px;"></div>
-<div id="onlineResults"></div>
 
 <div class="section-title" id="localSection" style="display:none;">🍳 登録済みレシピ</div>
 <div class="results-area" id="resultsArea">
@@ -267,13 +267,6 @@ function updateCount() {
     const count = document.querySelectorAll('.ing-chip.selected').length;
     document.getElementById('selectedCount').textContent = count + '個選択中';
 }
-
-document.getElementById('filterInput').addEventListener('input', function() {
-    const query = this.value.toLowerCase();
-    document.querySelectorAll('.ing-chip').forEach(chip => {
-        chip.style.display = chip.textContent.toLowerCase().includes(query) || !query ? '' : 'none';
-    });
-});
 
 document.getElementById('customIngredient').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
@@ -304,8 +297,13 @@ function addCustomIngredient(searchAfter) {
 async function searchRecipes() {
     const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
         .map(c => c.textContent.trim());
+    const freeInput = document.getElementById('freeInput').value.trim();
+    const typed = freeInput
+        ? freeInput.split(/[\s、,]+/).map(s => s.trim()).filter(Boolean)
+        : [];
+    const allItems = Array.from(new Set([...selected, ...typed]));
 
-    if (selected.length === 0) {
+    if (allItems.length === 0) {
         document.getElementById('resultsArea').innerHTML =
             '<div class="no-results"><div class="icon">👆</div><p>食材を1つ以上選んでください</p></div>';
         document.getElementById('onlineSection').style.display = 'none';
@@ -314,7 +312,7 @@ async function searchRecipes() {
         return;
     }
 
-    const query = selected.join(' ');
+    const query = allItems.join(' ');
     const enc = encodeURIComponent(query);
     const googleUrl = 'https://www.google.co.jp/search?q=' + encodeURIComponent(query + ' レシピ 日本人気');
     const cookpadUrl = 'https://cookpad.com/search/' + enc;
@@ -334,52 +332,13 @@ async function searchRecipes() {
         '<a href="' + delishUrl + '" target="_blank" rel="noopener" class="recipe-search-link delish">🍳 デリッシュキッチン</a>' +
         '<a href="' + kurashiruUrl + '" target="_blank" rel="noopener" class="recipe-search-link kurashiru">📺 クラシル</a>' +
         '<a href="' + rakutenUrl + '" target="_blank" rel="noopener" class="recipe-search-link rakuten">🛒 楽天レシピ</a>';
-    document.getElementById('onlineResults').innerHTML = '<div class="loading-online">🌐 検索中...</div>';
-
     const res = await fetch('/api/match-recipes', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({items: selected})
+        body: JSON.stringify({items: allItems})
     });
     const recipes = await res.json();
     renderResults(recipes);
-
-    try {
-        const onlineRes = await fetch('/api/search-online', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({items: selected})
-        });
-        const data = await onlineRes.json().catch(() => ({}));
-        const onlineRecipes = data.recipes || [];
-        if (onlineRecipes.length > 0) {
-            renderOnlineResults(onlineRecipes);
-        } else {
-            document.getElementById('onlineResults').innerHTML =
-                '<div class="no-online">上記の日本のレシピサイト（クックパッド・デリッシュキッチン・クラシル・楽天レシピ）で検索してみてください。</div>';
-        }
-    } catch (e) {
-        document.getElementById('onlineResults').innerHTML =
-            '<div class="no-online">上記の日本のレシピサイトから検索できます。</div>';
-    }
-}
-
-function renderOnlineResults(recipes) {
-    const area = document.getElementById('onlineResults');
-    if (!recipes.length) {
-        area.innerHTML = '<div class="no-online">ネットでマッチするレシピが見つかりませんでした。<br>別の食材を試してみてください。</div>';
-        return;
-    }
-    area.innerHTML = recipes.map(r => `
-        <a href="${r.url}" target="_blank" rel="noopener" class="online-card">
-            ${r.image ? `<img src="${r.image}" alt="" class="online-img">` : '<div class="online-img" style="background:#eee;"></div>'}
-            <div class="online-info">
-                <div class="online-title-text">${r.title}</div>
-                <div class="online-meta">${r.source} ${r.time ? '・' + r.time + '分' : ''}</div>
-                ${r.calories ? `<div class="online-nutrition">📊 ${r.calories}kcal / P${r.protein}g F${r.fat}g C${r.carbs}g</div>` : ''}
-            </div>
-        </a>
-    `).join('');
 }
 
 function renderResults(recipes) {

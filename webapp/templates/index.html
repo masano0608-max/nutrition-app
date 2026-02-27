@@ -73,6 +73,20 @@
 }
 .pattern-tab:hover { color: var(--primary); border-color: var(--primary); }
 .pattern-tab.active { color: white; background: var(--primary); border-color: var(--primary); }
+.menu-search {
+    margin: 10px auto 6px;
+    max-width: 520px;
+    padding: 0 12px;
+}
+.menu-search input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+}
+.menu-search input:focus { border-color: var(--primary); }
 .change-menu-btn { margin-top: 10px; font-size: 12px; padding: 6px 12px; }
 .alt-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .alt-modal.open { display: flex; }
@@ -88,6 +102,9 @@
 {% endblock %}
 
 {% block content %}
+<div class="menu-search">
+    <input type="text" id="menuSearchInput" placeholder="例: 鉄分豊富 / 魚 / ハンバーグ">
+</div>
 <div class="pattern-tabs">
     <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
     <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
@@ -98,7 +115,10 @@
 <div class="week-header">{{ plan.filename.replace('.md','').replace('2026-W10_','').replace('pattern_','') }}</div>
 
 {% for day in plan.days %}
-<div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s">
+<div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s"
+     data-title="{{ day.title }}"
+     data-tags="{% if day.tags %}{{ day.tags|join(' ') }}{% endif %}"
+     data-iron="{% if day.nutrition and day.nutrition.iron_mg %}{{ day.nutrition.iron_mg }}{% else %}0{% endif %}">
     <a href="#day-{{ loop.index }}" class="day-card" onclick="toggleDetail(this, event)">
         <div class="day-emoji">{{ day.emoji }}</div>
         <div class="day-info">
@@ -201,6 +221,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const altList = document.getElementById('altList');
     const altTitle = document.getElementById('altModalTitle');
     if (!modal) return;
+
+    const searchInput = document.getElementById('menuSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const q = searchInput.value.trim();
+            const qLower = q.toLowerCase();
+            const wantIron = qLower.includes('鉄分豊富') || qLower.includes('鉄分') || qLower.includes('iron');
+            document.querySelectorAll('.card').forEach(function(card) {
+                const title = (card.dataset.title || '').toLowerCase();
+                const tags = (card.dataset.tags || '').toLowerCase();
+                const iron = parseFloat(card.dataset.iron || '0');
+                let match = true;
+                if (q) {
+                    match = title.includes(qLower) || tags.includes(qLower);
+                    if (wantIron) {
+                        match = iron >= 2.0;
+                    }
+                }
+                card.style.display = match ? '' : 'none';
+            });
+        });
+    }
 
     document.body.addEventListener('click', function(e) {
         const btn = e.target.closest('.change-menu-btn');
