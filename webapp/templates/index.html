@@ -3,86 +3,99 @@
 
 {% block title %}今週の献立 - 栄養管理{% endblock %}
 {% block header_title %}🍽️ 今週の献立{% endblock %}
-{% block header_subtitle %}タップでレシピ詳細を表示{% endblock %}
+{% block header_subtitle %}タップで詳細を表示{% endblock %}
 
 {% block extra_style %}
 .day-card {
     display: flex;
     align-items: center;
-    padding: 16px;
-    gap: 14px;
+    padding: 14px 16px;
+    gap: 12px;
     text-decoration: none;
     color: inherit;
 }
 .day-emoji {
-    font-size: 36px;
-    width: 50px;
-    height: 50px;
+    font-size: 32px;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     background: var(--primary-light);
     border-radius: 14px;
+    border: 1.5px solid rgba(249,115,22,0.15);
 }
 .day-info { flex: 1; min-width: 0; }
 .day-label {
     font-size: 11px;
     color: var(--text-sub);
     font-weight: 600;
-    margin-bottom: 3px;
-    letter-spacing: 0.2px;
+    margin-bottom: 2px;
+    letter-spacing: 0.3px;
 }
 .day-title {
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 1.3;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     white-space: normal;
+    color: var(--text);
 }
 .day-meta {
     font-size: 11px;
     color: var(--text-sub);
-    margin-top: 4px;
+    margin-top: 5px;
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
 }
 .day-meta span {
-    background: #F5F5F5;
+    background: var(--bg);
     padding: 2px 8px;
     border-radius: 999px;
     font-weight: 600;
+    border: 1px solid var(--border);
 }
-.day-today {
-    border-left: 4px solid var(--primary);
-}
+.day-today { border-left: 3px solid var(--primary); }
 .day-arrow {
-    color: var(--text-sub);
-    font-size: 20px;
+    color: #C4B5AC;
+    font-size: 18px;
     flex-shrink: 0;
 }
 .week-header {
     text-align: center;
-    padding: 12px 0 4px;
-    font-size: 13px;
+    padding: 8px 0 4px;
+    font-size: 12px;
     color: var(--text-sub);
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
-.tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.day-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; font-weight: 600; }
+.tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.day-nutrition {
+    font-size: 11px;
+    color: var(--primary-dark);
+    margin-top: 4px;
+    font-weight: 600;
+    background: var(--primary-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
 .pattern-tabs {
-    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
-    padding: 8px 0 12px; margin-bottom: 4px;
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    padding: 8px 0 10px; margin-bottom: 2px;
 }
 .pattern-tab {
-    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
     text-decoration: none; color: var(--text-sub);
-    background: var(--bg-card); border: 2px solid var(--border);
+    background: white; border: 1.5px solid var(--border);
+    transition: all 0.15s;
 }
-.pattern-tab:hover { color: var(--primary); border-color: var(--primary); }
+.pattern-tab:active { transform: scale(0.97); }
 .pattern-tab.active { color: white; background: var(--primary); border-color: var(--primary); }
 .menu-search {
     margin: 10px auto 6px;
@@ -485,9 +498,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 var nutDiv = dayInfo.querySelector('.day-nutrition');
                                 if (d.nutrition && d.nutrition.calories) {
                                     var nut = d.nutrition;
+                                    if (!nutDiv) {
+                                        nutDiv = document.createElement('div');
+                                        nutDiv.className = 'day-nutrition';
+                                        dayInfo.appendChild(nutDiv);
+                                    }
                                     nutDiv.innerHTML = 'P' + (nut.protein_g||'-') + 'g / F' + (nut.fat_g||'-') + 'g / C' + (nut.carbs_g||'-') + 'g' + (nut.iron_mg || nut.folate_mcg ? ' ｜ 鉄' + (nut.iron_mg||'-') + 'mg 葉酸' + (nut.folate_mcg||'-') + 'μg' : '') + '（1人分目安）';
                                     nutDiv.style.display = '';
-                                } else { nutDiv.style.display = 'none'; }
+                                } else if (nutDiv) { nutDiv.style.display = 'none'; }
                                 var tagsRow = dayInfo.querySelector('.tags-row');
                                 if (tagsRow && d.tags && d.tags.length) {
                                     tagsRow.innerHTML = d.tags.map(function(t) {

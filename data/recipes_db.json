@@ -16111,5 +16111,407 @@
       "iron_mg": 1.3,
       "folate_mcg": 106
     }
+  },
+  {
+    "id": "nanohana_chicken",
+    "title": "菜の花と鶏もも肉の春炒め",
+    "emoji": "🌼",
+    "main_protein": "chicken",
+    "cooking_time_min": 15,
+    "hidden_veggies": [
+      "菜の花"
+    ],
+    "veggie_technique": "さっと炒め・彩り",
+    "ingredients": [
+      {
+        "name": "鶏もも肉（国産）",
+        "quantity": "200g",
+        "category": "肉類"
+      },
+      {
+        "name": "菜の花",
+        "quantity": "1袋（150g）",
+        "category": "野菜"
+      },
+      {
+        "name": "にんにく",
+        "quantity": "1かけ",
+        "category": "野菜"
+      },
+      {
+        "name": "しょうゆ",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "みりん",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "ごま油",
+        "quantity": "小さじ1",
+        "category": "調味料"
+      }
+    ],
+    "seasonings": [
+      "しょうゆ",
+      "みりん",
+      "ごま油"
+    ],
+    "steps": [
+      "1. 鶏もも肉を一口大に切り、塩こしょうをふる",
+      "2. 菜の花は根元を切り落とし、食べやすい長さに切る",
+      "3. フライパンにごま油を熱し、にんにく→鶏肉の順で炒める",
+      "4. 鶏肉に火が通ったら菜の花を加えてさっと炒める",
+      "5. しょうゆ・みりんを回しかけて全体を絡めたら完成"
+    ],
+    "kid_tips": "菜の花のほのかな苦みは鶏肉の旨みで和らぐ。食べにくければ短めに切って",
+    "papa_snack": {
+      "title": "菜の花の白和え",
+      "description": "豆腐・すりごまで和えてビールのつまみに"
+    },
+    "nutrition_tags": [
+      "鉄分豊富",
+      "葉酸",
+      "ビタミンC",
+      "春の旬食材",
+      "時短"
+    ],
+    "nutrition": {
+      "calories": 290,
+      "protein_g": 22,
+      "fat_g": 14,
+      "carbs_g": 10,
+      "iron_mg": 2.5,
+      "folate_mcg": 95
+    }
+  },
+  {
+    "id": "nanohana_pasta",
+    "title": "菜の花とウインナーの米粉パスタ",
+    "emoji": "🍝",
+    "main_protein": "pork",
+    "cooking_time_min": 15,
+    "hidden_veggies": [
+      "菜の花"
+    ],
+    "veggie_technique": "さっとゆで・彩り",
+    "ingredients": [
+      {
+        "name": "米粉パスタ",
+        "quantity": "160g",
+        "category": "穀物"
+      },
+      {
+        "name": "菜の花",
+        "quantity": "1/2袋（75g）",
+        "category": "野菜"
+      },
+      {
+        "name": "無添加ウインナー（国産豚）",
+        "quantity": "4本",
+        "category": "肉類"
+      },
+      {
+        "name": "にんにく",
+        "quantity": "1かけ",
+        "category": "野菜"
+      },
+      {
+        "name": "オリーブ油",
+        "quantity": "大さじ1.5",
+        "category": "調味料"
+      },
+      {
+        "name": "しょうゆ",
+        "quantity": "小さじ2",
+        "category": "調味料"
+      },
+      {
+        "name": "塩こしょう",
+        "quantity": "少々",
+        "category": "調味料"
+      }
+    ],
+    "seasonings": [
+      "オリーブ油",
+      "しょうゆ",
+      "塩こしょう"
+    ],
+    "steps": [
+      "1. 米粉パスタを表示通りにゆでる（菜の花は最後1分一緒にゆでる）",
+      "2. ウインナーは斜め切り。にんにくはみじん切り",
+      "3. フライパンにオリーブ油・にんにくを熱し、ウインナーを炒める",
+      "4. ゆでたパスタと菜の花を加えてしょうゆ・塩で味を調える"
+    ],
+    "kid_tips": "ウインナーの旨みで苦みが気にならない。菜の花を小さく切るとさらに食べやすい",
+    "papa_snack": {
+      "title": "ペペロンチーノ風アレンジ",
+      "description": "唐辛子を加えて大人味に"
+    },
+    "nutrition_tags": [
+      "葉酸",
+      "ビタミンC",
+      "グルテンフリー",
+      "春の旬食材",
+      "時短"
+    ],
+    "nutrition": {
+      "calories": 450,
+      "protein_g": 16,
+      "fat_g": 16,
+      "carbs_g": 60,
+      "iron_mg": 2.2,
+      "folate_mcg": 80
+    }
+  },
+  {
+    "id": "hina_chirashi",
+    "title": "ひな祭りちらし寿司",
+    "emoji": "🌸",
+    "main_protein": "fish",
+    "cooking_time_min": 30,
+    "hidden_veggies": [
+      "れんこん",
+      "にんじん"
+    ],
+    "veggie_technique": "飾り切り・彩り",
+    "ingredients": [
+      {
+        "name": "ごはん（温かいもの）",
+        "quantity": "2合分",
+        "category": "穀物"
+      },
+      {
+        "name": "生鮭",
+        "quantity": "2切れ",
+        "category": "魚類"
+      },
+      {
+        "name": "卵",
+        "quantity": "2個",
+        "category": "卵・豆腐・乳製品"
+      },
+      {
+        "name": "れんこん",
+        "quantity": "100g",
+        "category": "野菜"
+      },
+      {
+        "name": "にんじん",
+        "quantity": "1/2本",
+        "category": "野菜"
+      },
+      {
+        "name": "絹さや",
+        "quantity": "8本",
+        "category": "野菜"
+      },
+      {
+        "name": "酢",
+        "quantity": "大さじ3",
+        "category": "調味料"
+      },
+      {
+        "name": "砂糖",
+        "quantity": "大さじ1.5",
+        "category": "調味料"
+      },
+      {
+        "name": "塩",
+        "quantity": "小さじ1",
+        "category": "調味料"
+      }
+    ],
+    "seasonings": [
+      "酢",
+      "砂糖",
+      "塩"
+    ],
+    "steps": [
+      "1. 合わせ酢（酢・砂糖・塩）を作りごはんに混ぜて酢飯にする",
+      "2. 鮭は塩焼きにしてほぐす。卵は薄焼きにして細切りに",
+      "3. れんこん・にんじんは薄切りにして甘酢で煮る",
+      "4. 酢飯にれんこん・にんじんを混ぜ込む",
+      "5. 上に鮭・錦糸卵・絹さやをきれいに飾って完成"
+    ],
+    "kid_tips": "3月3日ひな祭りの特別メニュー。卵の黄色・鮭のピンク・絹さやの緑でカラフルに",
+    "papa_snack": {
+      "title": "いくら追加",
+      "description": "大人はいくらをのせて豪華に"
+    },
+    "nutrition_tags": [
+      "鉄分豊富",
+      "葉酸",
+      "DHA",
+      "ひな祭り",
+      "春の旬食材"
+    ],
+    "nutrition": {
+      "calories": 420,
+      "protein_g": 24,
+      "fat_g": 8,
+      "carbs_g": 65,
+      "iron_mg": 2.8,
+      "folate_mcg": 60
+    }
+  },
+  {
+    "id": "asari_hakusai",
+    "title": "あさりと白菜の春鍋",
+    "emoji": "🍲",
+    "main_protein": "fish",
+    "cooking_time_min": 20,
+    "hidden_veggies": [
+      "白菜",
+      "長ネギ"
+    ],
+    "veggie_technique": "煮込み・旨み吸収",
+    "ingredients": [
+      {
+        "name": "あさり（砂抜き済み）",
+        "quantity": "250g",
+        "category": "魚介"
+      },
+      {
+        "name": "白菜",
+        "quantity": "1/4玉（300g）",
+        "category": "野菜"
+      },
+      {
+        "name": "絹ごし豆腐",
+        "quantity": "1丁（300g）",
+        "category": "卵・豆腐・乳製品"
+      },
+      {
+        "name": "長ネギ",
+        "quantity": "1/2本",
+        "category": "野菜"
+      },
+      {
+        "name": "しょうゆ",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "みそ",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "昆布だし",
+        "quantity": "400ml",
+        "category": "調味料"
+      }
+    ],
+    "seasonings": [
+      "しょうゆ",
+      "みそ",
+      "昆布だし"
+    ],
+    "steps": [
+      "1. 白菜はざく切り。豆腐は食べやすく切る。長ネギは斜め切り",
+      "2. 鍋に昆布だしを入れ、白菜→豆腐→あさりの順に入れる",
+      "3. 中火で加熱し、あさりの口が開いたら長ネギを加える",
+      "4. しょうゆ・みそで味を調えて完成"
+    ],
+    "kid_tips": "あさりの旨みが白菜と豆腐に染みてうまみたっぷり。子供はスープをよく飲む",
+    "papa_snack": {
+      "title": "ラーメンシメ",
+      "description": "残ったスープに中華麺を入れてシメのラーメンに"
+    },
+    "nutrition_tags": [
+      "鉄分豊富",
+      "亜鉛",
+      "旨みたっぷり",
+      "春の旬食材"
+    ],
+    "nutrition": {
+      "calories": 180,
+      "protein_g": 20,
+      "fat_g": 6,
+      "carbs_g": 10,
+      "iron_mg": 5.5,
+      "folate_mcg": 45
+    }
+  },
+  {
+    "id": "spring_cabbage_pork",
+    "title": "春キャベツと豚こまの重ね蒸し",
+    "emoji": "🥬",
+    "main_protein": "pork",
+    "cooking_time_min": 20,
+    "hidden_veggies": [
+      "春キャベツ"
+    ],
+    "veggie_technique": "重ね蒸し・甘みを引き出す",
+    "ingredients": [
+      {
+        "name": "豚こま肉",
+        "quantity": "200g",
+        "category": "肉類"
+      },
+      {
+        "name": "春キャベツ",
+        "quantity": "1/4玉（300g）",
+        "category": "野菜"
+      },
+      {
+        "name": "にんじん",
+        "quantity": "1/3本",
+        "category": "野菜"
+      },
+      {
+        "name": "ごま油",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "しょうゆ",
+        "quantity": "大さじ1.5",
+        "category": "調味料"
+      },
+      {
+        "name": "ポン酢",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      },
+      {
+        "name": "すりごま",
+        "quantity": "大さじ1",
+        "category": "調味料"
+      }
+    ],
+    "seasonings": [
+      "ごま油",
+      "しょうゆ",
+      "ポン酢"
+    ],
+    "steps": [
+      "1. 春キャベツはざく切り、にんじんは千切りにする",
+      "2. 鍋の底にキャベツ→豚肉→にんじん→キャベツの順で重ねる",
+      "3. ごま油を回しかけ、ふたをして弱中火で10〜12分蒸し煮する",
+      "4. 蒸し上がったらポン酢・すりごまをかけて完成"
+    ],
+    "kid_tips": "春キャベツの甘みが蒸すと引き立つ。ポン酢の酸みが苦手なら少なめに",
+    "papa_snack": {
+      "title": "ごまだれ追加",
+      "description": "にんにくと辛子を混ぜたごまだれで大人味に"
+    },
+    "nutrition_tags": [
+      "ビタミンC",
+      "食物繊維",
+      "春の旬食材",
+      "時短"
+    ],
+    "nutrition": {
+      "calories": 310,
+      "protein_g": 20,
+      "fat_g": 16,
+      "carbs_g": 14,
+      "iron_mg": 1.8,
+      "folate_mcg": 70
+    }
   }
 ]

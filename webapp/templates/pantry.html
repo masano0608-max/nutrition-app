@@ -3,7 +3,7 @@
 
 {% block title %}食材からレシピ検索 - 栄養管理{% endblock %}
 {% block header_title %}🔍 食材チェッカー{% endblock %}
-{% block header_subtitle %}家にある食材でレシピを提案{% endblock %}
+{% block header_subtitle %}食材を選んでレシピ提案{% endblock %}
 
 {% block extra_style %}
 .search-area {
@@ -37,6 +37,7 @@
     background: var(--primary);
     color: white;
     border-color: var(--primary);
+    font-weight: 700;
 }
 .ing-chip:active { transform: scale(0.95); }
 
@@ -78,7 +79,7 @@
     cursor: pointer;
     white-space: nowrap;
 }
-.search-btn:active { background: #388E3C; }
+.search-btn:active { background: var(--primary-dark); }
 
 .result-card {
     padding: 16px;
@@ -202,9 +203,9 @@
     border-radius: 3px;
     transition: width 0.5s ease;
 }
-.match-high { background: var(--primary); }
-.match-mid { background: #FFC107; }
-.match-low { background: #FF7043; }
+.match-high { background: var(--accent); }
+.match-mid { background: var(--primary); }
+.match-low { background: #E5522B; }
 
 .match-label {
     font-size: 11px;
