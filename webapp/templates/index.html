@@ -35,8 +35,10 @@
     font-weight: 700;
     line-height: 1.3;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
 }
 .day-meta {
     font-size: 11px;
@@ -146,6 +148,30 @@
     margin-bottom: 6px;
     display: block;
 }
+.trend-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 4px auto 10px;
+    padding: 0 12px;
+}
+.trend-chip {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+.trend-chip:active { transform: scale(0.98); }
+.trend-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+}
 .change-menu-btn { margin-top: 10px; font-size: 12px; padding: 6px 12px; }
 .alt-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .alt-modal.open { display: flex; }
@@ -175,6 +201,14 @@
 <div class="menu-search-empty" id="menuSearchEmpty" style="display:none;">
     <span class="icon">🫥</span>該当する献立がありません
 </div>
+<div class="trend-chips" id="trendChips">
+    <button type="button" class="trend-chip" data-search="時短">⏱️ 時短</button>
+    <button type="button" class="trend-chip" data-search="高たんぱく">💪 高たんぱく</button>
+    <button type="button" class="trend-chip" data-search="鉄分">🩸 鉄分</button>
+    <button type="button" class="trend-chip" data-search="野菜たっぷり">🥬 野菜たっぷり</button>
+    <button type="button" class="trend-chip" data-search="子供人気">⭐️ 子供人気</button>
+</div>
+<div class="trend-note">トレンド検索（タップで絞り込み）</div>
 <div class="pattern-tabs">
     <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
     <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
@@ -351,6 +385,15 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.focus();
         });
     }
+    document.querySelectorAll('.trend-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+            if (!searchInput) return;
+            const q = chip.dataset.search || '';
+            searchInput.value = q;
+            applyMenuSearchFilter();
+            searchInput.focus();
+        });
+    });
 
     document.body.addEventListener('click', function(e) {
         const btn = e.target.closest('.change-menu-btn');

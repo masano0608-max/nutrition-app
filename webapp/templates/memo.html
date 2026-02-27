@@ -121,6 +121,41 @@
     color: var(--text-sub);
     margin-top: 4px;
 }
+.memo-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+.memo-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #FFF3E0;
+    color: #E65100;
+    font-weight: 600;
+}
+.memo-actions {
+    display: flex;
+    gap: 6px;
+}
+.memo-pin {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.memo-pin.active { background: #C8E6C9; }
+.memo-pin:active { background: #A5D6A7; }
 .memo-delete {
     width: 36px;
     height: 36px;
@@ -210,22 +245,33 @@ function renderMemos(items) {
     const list = document.getElementById('memoList');
     const empty = document.getElementById('emptyState');
     const entries = items.filter(i => i.text).reverse();
+    const pinned = entries.filter(i => i.pinned);
+    const normal = entries.filter(i => !i.pinned);
 
     if (entries.length === 0) {
         list.innerHTML = '<div class="memo-empty" id="emptyState"><div class="icon">📝</div><p>まだメモはありません</p><p style="font-size:12px; margin-top:6px;">上の欄から追加してください</p></div>';
         return;
     }
 
-    list.innerHTML = entries.map(item => `
+    const renderItem = item => `
         <div class="memo-item ${item.checked ? 'checked' : ''}" data-id="${item.id}">
             <div class="memo-check ${item.checked ? 'done' : ''}" onclick="toggleMemo('${item.id}')">${item.checked ? '✓' : ''}</div>
             <div class="memo-body">
                 <div class="memo-text">${escapeHtml(item.text)}</div>
                 <div class="memo-meta">${item.author} ・ ${item.created_at || ''}</div>
+                ${item.pinned ? '<div class="memo-badges"><span class="memo-badge">重要</span></div>' : ''}
             </div>
-            <button type="button" class="memo-delete" onclick="deleteMemo('${item.id}')">×</button>
+            <div class="memo-actions">
+                <button type="button" class="memo-pin ${item.pinned ? 'active' : ''}" onclick="togglePin('${item.id}')">★</button>
+                <button type="button" class="memo-delete" onclick="deleteMemo('${item.id}')">×</button>
+            </div>
         </div>
-    `).join('');
+    `;
+
+    list.innerHTML = [
+        pinned.length ? pinned.map(renderItem).join('') : '',
+        normal.map(renderItem).join('')
+    ].join('');
 }
 
 function escapeHtml(s) {
@@ -253,6 +299,15 @@ async function toggleMemo(id) {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ action: 'toggle', id, board_id: 'main' })
+    });
+    loadMemos();
+}
+
+async function togglePin(id) {
+    await fetch('/api/memo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: 'pin', id, board_id: 'main' })
     });
     loadMemos();
 }

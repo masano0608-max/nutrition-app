@@ -112,7 +112,28 @@
 }
 
 .online-section { margin-top: 24px; }
-.online-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.online-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: space-between;
+}
+.online-title .title-left { display: inline-flex; align-items: center; gap: 6px; }
+.online-actions { display: flex; align-items: center; gap: 8px; }
+.online-refresh {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.online-refresh:active { transform: scale(0.98); }
+.online-updated { font-size: 11px; color: var(--text-sub); }
 .online-card {
     display: flex;
     gap: 12px;
@@ -138,6 +159,14 @@
 .online-nutrition { font-size: 11px; color: var(--primary); margin-top: 4px; }
 .loading-online { padding: 20px; text-align: center; color: var(--text-sub); }
 .no-online { padding: 16px; text-align: center; color: var(--text-sub); font-size: 13px; }
+.online-cta {
+    padding: 10px 12px;
+    background: var(--primary-light);
+    border-radius: 10px;
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: var(--text);
+}
 .recipe-search-link {
     display: block;
     padding: 12px 14px;
@@ -217,6 +246,27 @@
     text-align: right;
     padding: 4px 0;
 }
+.trend-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0 6px;
+}
+.trend-chip {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+.trend-chip:active { transform: scale(0.98); }
+.trend-note {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+}
 
 .results-area { min-height: 100px; }
 {% endblock %}
@@ -234,6 +284,15 @@
         <button class="search-btn" onclick="addCustomIngredient(true)">追加</button>
     </div>
 
+    <div class="trend-chips" id="pantryTrendChips">
+        <button type="button" class="trend-chip" data-query="時短 レシピ">⏱️ 時短</button>
+        <button type="button" class="trend-chip" data-query="高たんぱく">💪 高たんぱく</button>
+        <button type="button" class="trend-chip" data-query="鉄分">🩸 鉄分</button>
+        <button type="button" class="trend-chip" data-query="野菜たっぷり">🥬 野菜たっぷり</button>
+        <button type="button" class="trend-chip" data-query="子供 人気">⭐️ 子供人気</button>
+    </div>
+    <div class="trend-note">トレンド検索（タップで検索語に反映）</div>
+
     <div class="selected-count" id="selectedCount">0個選択中</div>
 
     <div class="category-label">🍳 一覧から選ぶ（タップで追加）</div>
@@ -244,8 +303,18 @@
     </div>
 </div>
 
-<div class="section-title online-section" id="onlineSection" style="display:none;">🌐 日本のレシピを検索</div>
+<div class="section-title online-section" id="onlineSection" style="display:none;">
+    <div class="online-title">
+        <span class="title-left">🌐 ネットの人気レシピ</span>
+        <span class="online-actions">
+            <button type="button" class="online-refresh" id="onlineRefreshBtn">🔄 更新</button>
+            <span class="online-updated" id="onlineUpdated"></span>
+        </span>
+    </div>
+</div>
 <div id="recipeSearchLinks" style="display:none; margin-bottom:12px;"></div>
+<div class="online-cta" id="onlineCta" style="display:none;">今選んだ食材をもとに、ネット上の人気レシピを表示します。</div>
+<div id="onlineResults"></div>
 
 <div class="section-title" id="localSection" style="display:none;">🍳 登録済みレシピ</div>
 <div class="results-area" id="resultsArea">
@@ -264,19 +333,21 @@ function scheduleSearch() {
     searchTimer = setTimeout(searchRecipes, 120);
 }
 const allIngredientsEl = document.getElementById('allIngredients');
-let lastTouchTime = 0;
+let lastPointerTime = 0;
+function handleChipClick(e) {
+    const chip = e.target.closest('.ing-chip');
+    if (!chip) return;
+    toggleIngredient(chip);
+}
 if (allIngredientsEl) {
-    allIngredientsEl.addEventListener('touchend', function(e) {
-        const chip = e.target.closest('.ing-chip');
-        if (!chip) return;
-        lastTouchTime = Date.now();
+    allIngredientsEl.addEventListener('pointerup', function(e) {
+        lastPointerTime = Date.now();
         e.preventDefault();
-        toggleIngredient(chip);
-    }, { passive: false });
+        handleChipClick(e);
+    });
     allIngredientsEl.addEventListener('click', function(e) {
-        if (Date.now() - lastTouchTime < 400) return;
-        const chip = e.target.closest('.ing-chip');
-        if (chip) toggleIngredient(chip);
+        if (Date.now() - lastPointerTime < 400) return;
+        handleChipClick(e);
     });
 }
 function toggleIngredient(chip) {
@@ -299,6 +370,16 @@ if (customInputEl) {
         }
     });
 }
+
+document.querySelectorAll('#pantryTrendChips .trend-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const freeEl = document.getElementById('freeInput');
+        if (!freeEl) return;
+        freeEl.value = btn.dataset.query || '';
+        searchRecipes();
+        freeEl.focus();
+    });
+});
 
 function addCustomIngredient(searchAfter) {
     const input = document.getElementById('customIngredient');
@@ -334,6 +415,8 @@ async function searchRecipes() {
         document.getElementById('onlineSection').style.display = 'none';
         document.getElementById('localSection').style.display = 'none';
         document.getElementById('recipeSearchLinks').style.display = 'none';
+        document.getElementById('onlineCta').style.display = 'none';
+        document.getElementById('onlineResults').innerHTML = '';
         return;
     }
 
@@ -348,6 +431,7 @@ async function searchRecipes() {
     document.getElementById('onlineSection').style.display = 'block';
     document.getElementById('localSection').style.display = 'block';
     document.getElementById('initialMessage').style.display = 'none';
+    document.getElementById('onlineCta').style.display = 'block';
 
     document.getElementById('recipeSearchLinks').style.display = 'block';
     document.getElementById('recipeSearchLinks').innerHTML =
@@ -368,6 +452,7 @@ async function searchRecipes() {
         if (!res.ok) throw new Error('fetch failed');
         const recipes = await res.json();
         renderResults(recipes);
+        fetchOnlineRecipes(allItems);
     } catch (e) {
         document.getElementById('resultsArea').innerHTML =
             '<div class="no-results"><div class="icon">⚠️</div><p>検索に失敗しました。通信状況を確認してください。</p></div>';
@@ -421,6 +506,62 @@ function renderResults(recipes) {
     });
 
     area.innerHTML = html;
+}
+
+async function fetchOnlineRecipes(items) {
+    const onlineArea = document.getElementById('onlineResults');
+    const updated = document.getElementById('onlineUpdated');
+    onlineArea.innerHTML = '<div class="loading-online">ネットの人気レシピを取得中...</div>';
+    try {
+        const res = await fetch('/api/search-online', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({items: items})
+        });
+        const data = await res.json();
+        const recipes = data.recipes || [];
+        if (!recipes.length) {
+            onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした</div>';
+            if (updated) updated.textContent = '';
+            return;
+        }
+        onlineArea.innerHTML = recipes.map(function(r) {
+            return `
+            <a class="online-card" href="${r.url || '#'}" target="_blank" rel="noopener">
+                <img class="online-img" src="${r.image || 'https://dummyimage.com/160x160/eeeeee/aaaaaa&text=Recipe'}" alt="">
+                <div class="online-info">
+                    <div class="online-title-text">${r.title || 'レシピ'}</div>
+                    <div class="online-meta">${r.source || 'Web'}</div>
+                    ${r.nutrition ? `<div class="online-nutrition">P${r.nutrition.protein_g || '-'} F${r.nutrition.fat_g || '-'} C${r.nutrition.carbs_g || '-'}</div>` : ''}
+                </div>
+            </a>`;
+        }).join('');
+        if (updated) {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            updated.textContent = `更新 ${hh}:${mm}`;
+        }
+    } catch (e) {
+        onlineArea.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
+        if (updated) updated.textContent = '';
+    }
+}
+
+const refreshBtn = document.getElementById('onlineRefreshBtn');
+if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+        const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
+            .map(c => c.textContent.trim());
+        const freeEl = document.getElementById('freeInput');
+        const freeInput = freeEl ? freeEl.value.trim() : '';
+        const typed = freeInput
+            ? freeInput.split(/[\s、,]+/).map(s => s.trim()).filter(Boolean)
+            : [];
+        const allItems = Array.from(new Set([...selected, ...typed]));
+        if (!allItems.length) return;
+        fetchOnlineRecipes(allItems);
+    });
 }
 </script>
 {% endblock %}

@@ -529,6 +529,7 @@ def api_save_memo():
             "category": data.get("category", "メモ"),
             "created_at": data.get("created_at", ""),
             "checked": False,
+            "pinned": False,
         }
         if not item["id"]:
             import uuid
@@ -541,6 +542,11 @@ def api_save_memo():
         for it in board["items"]:
             if it.get("id") == data.get("id"):
                 it["checked"] = not it.get("checked", False)
+                break
+    elif action == "pin":
+        for it in board["items"]:
+            if it.get("id") == data.get("id"):
+                it["pinned"] = not it.get("pinned", False)
                 break
     elif action == "delete":
         board["items"] = [it for it in board["items"] if it.get("id") != data.get("id")]

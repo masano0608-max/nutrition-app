@@ -14,7 +14,20 @@
     align-items: center;
     gap: 6px;
     margin-bottom: 12px;
+    justify-content: space-between;
 }
+.store-title { display: inline-flex; align-items: center; gap: 6px; }
+.store-actions { display: inline-flex; align-items: center; gap: 6px; }
+.store-toggle {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.store-toggle:active { transform: scale(0.98); }
 .store-badge {
     font-size: 10px;
     padding: 2px 8px;
@@ -31,6 +44,8 @@
 }
 .item-row.checked { opacity: 0.4; text-decoration: line-through; }
 .item-row:last-child { border-bottom: none; }
+.card.collapsed .item-row { display: none; }
+.card.collapsed .store-card { padding-bottom: 10px; }
 .item-check {
     width: 22px;
     height: 22px;
@@ -82,6 +97,27 @@
     font-size: 12px;
     color: var(--text-sub);
     text-align: center;
+}
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0 12px;
+}
+.filter-btn {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+}
+.filter-btn.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .route-card {
@@ -137,12 +173,17 @@
 
 <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 <div class="progress-text" id="progressText">0 / 0 品 完了</div>
+<div class="filter-bar">
+    <button type="button" class="filter-btn active" data-filter="all">すべて表示</button>
+    <button type="button" class="filter-btn" data-filter="remaining">未完了のみ</button>
+</div>
 
 <!-- 肉類 -->
 <div class="card animate-in" style="animation-delay:0.1s">
     <div class="store-card">
-        <div class="store-name">🥩 肉類
-            <span class="store-badge badge-orange">国産必須</span>
+        <div class="store-name">
+            <span class="store-title">🥩 肉類 <span class="store-badge badge-orange">国産必須</span></span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
         </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
@@ -182,7 +223,10 @@
 <!-- 魚 -->
 <div class="card animate-in" style="animation-delay:0.15s">
     <div class="store-card">
-        <div class="store-name">🐟 魚類</div>
+        <div class="store-name">
+            <span class="store-title">🐟 魚類</span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
+        </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
             <div class="item-info">
@@ -197,8 +241,9 @@
 <!-- 野菜 -->
 <div class="card animate-in" style="animation-delay:0.2s">
     <div class="store-card">
-        <div class="store-name">🥬 野菜
-            <span class="store-badge badge-green">葉物はイオンで</span>
+        <div class="store-name">
+            <span class="store-title">🥬 野菜 <span class="store-badge badge-green">葉物はイオンで</span></span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
         </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
@@ -269,8 +314,9 @@
 <!-- 日配品 -->
 <div class="card animate-in" style="animation-delay:0.25s">
     <div class="store-card">
-        <div class="store-name">🥚 日配品
-            <span class="store-badge badge-blue">感謝デー5%OFF</span>
+        <div class="store-name">
+            <span class="store-title">🥚 日配品 <span class="store-badge badge-blue">感謝デー5%OFF</span></span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
         </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
@@ -306,7 +352,10 @@
 <!-- 缶詰・冷凍 -->
 <div class="card animate-in" style="animation-delay:0.3s">
     <div class="store-card">
-        <div class="store-name">🥫 缶詰・冷凍食品</div>
+        <div class="store-name">
+            <span class="store-title">🥫 缶詰・冷凍食品</span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
+        </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
             <div class="item-info">
@@ -341,8 +390,9 @@
 <!-- グルテンフリー食材 -->
 <div class="card animate-in" style="animation-delay:0.35s">
     <div class="store-card">
-        <div class="store-name">🌾 グルテンフリー食材
-            <span class="store-badge badge-green">小麦粉代替</span>
+        <div class="store-name">
+            <span class="store-title">🌾 グルテンフリー食材 <span class="store-badge badge-green">小麦粉代替</span></span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
         </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
@@ -378,8 +428,9 @@
 <!-- 無添加調味料 -->
 <div class="card animate-in" style="animation-delay:0.4s">
     <div class="store-card">
-        <div class="store-name">🧂 無添加調味料
-            <span class="store-badge badge-orange">初回のみ購入</span>
+        <div class="store-name">
+            <span class="store-title">🧂 無添加調味料 <span class="store-badge badge-orange">初回のみ購入</span></span>
+            <span class="store-actions"><button type="button" class="store-toggle" onclick="toggleSection(this)">－</button></span>
         </div>
         <div class="item-row" onclick="toggleCheck(this)">
             <div class="item-check"></div>
@@ -427,6 +478,23 @@ function updateProgress() {
     document.getElementById('progressText').textContent = done + ' / ' + total + ' 品 完了';
 }
 
+function applyFilter(filter) {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    document.querySelectorAll('.item-row').forEach(row => {
+        const hidden = (filter === 'remaining' && row.classList.contains('checked'));
+        row.style.display = hidden ? 'none' : '';
+    });
+}
+
+function toggleSection(btn) {
+    const card = btn.closest('.card');
+    if (!card) return;
+    card.classList.toggle('collapsed');
+    btn.textContent = card.classList.contains('collapsed') ? '＋' : '－';
+}
+
 function saveState() {
     const states = [];
     document.querySelectorAll('.item-row').forEach((row, i) => {
@@ -451,5 +519,8 @@ function loadState() {
 }
 
 window.addEventListener('load', loadState);
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+});
 </script>
 {% endblock %}
