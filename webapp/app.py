@@ -347,6 +347,9 @@ def match_recipes(pantry_items):
 
         match_ratio = len(matched) / max(len(recipe.get("ingredients", [])), 1)
 
+        kid_tips = recipe.get("kid_tips", "")
+        if isinstance(kid_tips, list):
+            kid_tips = " ".join(str(t) for t in kid_tips) if kid_tips else ""
         results.append({
             "id": recipe.get("id", ""),
             "emoji": recipe.get("emoji", ""),
@@ -356,7 +359,7 @@ def match_recipes(pantry_items):
             "match_ratio": round(match_ratio * 100),
             "matched": matched,
             "missing": missing,
-            "kid_tips": recipe.get("kid_tips", ""),
+            "kid_tips": kid_tips,
             "papa_snack": recipe.get("papa_snack", {}).get("title", ""),
             "nutrition_tags": recipe.get("nutrition_tags", []),
             "nutrition": recipe.get("nutrition", {}),
@@ -375,6 +378,9 @@ def index():
         plan = get_latest_meal_plan()
         if plan:
             plan["pattern"] = "default"
+        elif load_recipes():
+            # MDファイルがなくてもレシピがあればパターン献立を表示
+            plan = get_meal_plan_by_pattern("default")
     return render_template("index.html", plan=plan, current_pattern=pattern)
 
 
