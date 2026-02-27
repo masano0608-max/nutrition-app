@@ -239,7 +239,7 @@
     <div class="category-label">🍳 一覧から選ぶ（タップで追加）</div>
     <div class="ingredient-grid" id="allIngredients">
         {% for ing in all_ingredients %}
-        <div class="ing-chip" onclick="toggleIngredient(this)">{{ ing }}</div>
+        <div class="ing-chip">{{ ing }}</div>
         {% endfor %}
     </div>
 </div>
@@ -300,7 +300,6 @@ function addCustomIngredient(searchAfter) {
         const c = document.createElement('div');
         c.className = 'ing-chip';
         c.textContent = name;
-        c.onclick = function() { toggleIngredient(c); };
         document.getElementById('allIngredients').prepend(c);
         return c;
     })();
