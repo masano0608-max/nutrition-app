@@ -22,6 +22,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    background: var(--primary-light);
+    border-radius: 14px;
 }
 .day-info { flex: 1; min-width: 0; }
 .day-label {
@@ -29,10 +31,11 @@
     color: var(--text-sub);
     font-weight: 600;
     margin-bottom: 3px;
+    letter-spacing: 0.2px;
 }
 .day-title {
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 800;
     line-height: 1.3;
     overflow: hidden;
     display: -webkit-box;
@@ -48,12 +51,18 @@
     flex-wrap: wrap;
     gap: 6px;
 }
+.day-meta span {
+    background: #F5F5F5;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+}
 .day-today {
     border-left: 4px solid var(--primary);
 }
 .day-arrow {
-    color: var(--border);
-    font-size: 18px;
+    color: var(--text-sub);
+    font-size: 20px;
     flex-shrink: 0;
 }
 .week-header {
@@ -184,9 +193,18 @@
 .alt-item .info { flex: 1; }
 .alt-item .title { font-weight: 600; }
 .alt-item .meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.day-detail {
+    background: #FAFAFA;
+}
 {% endblock %}
 
 {% block content %}
+<div class="pattern-tabs">
+    <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
+    <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
+    <a href="?pattern=yoshoku" class="pattern-tab {% if current_pattern == 'yoshoku' %}active{% endif %}">洋食</a>
+    <a href="?pattern=short" class="pattern-tab {% if current_pattern == 'short' %}active{% endif %}">時短</a>
+</div>
 <div class="menu-search">
     <div class="menu-search-card">
         <div class="menu-search-label">🔎 献立を検索</div>
@@ -198,9 +216,6 @@
         <div class="menu-search-help">複数キーワードはスペース/、/カンマ区切り</div>
     </div>
 </div>
-<div class="menu-search-empty" id="menuSearchEmpty" style="display:none;">
-    <span class="icon">🫥</span>該当する献立がありません
-</div>
 <div class="trend-chips" id="trendChips">
     <button type="button" class="trend-chip" data-search="時短">⏱️ 時短</button>
     <button type="button" class="trend-chip" data-search="高たんぱく">💪 高たんぱく</button>
@@ -209,11 +224,8 @@
     <button type="button" class="trend-chip" data-search="子供人気">⭐️ 子供人気</button>
 </div>
 <div class="trend-note">トレンド検索（タップで絞り込み）</div>
-<div class="pattern-tabs">
-    <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
-    <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
-    <a href="?pattern=yoshoku" class="pattern-tab {% if current_pattern == 'yoshoku' %}active{% endif %}">洋食</a>
-    <a href="?pattern=short" class="pattern-tab {% if current_pattern == 'short' %}active{% endif %}">時短</a>
+<div class="menu-search-empty" id="menuSearchEmpty" style="display:none;">
+    <span class="icon">🫥</span>該当する献立がありません
 </div>
 {% if plan %}
 <div class="week-header">{{ plan.filename.replace('.md','').replace('2026-W10_','').replace('pattern_','') }}</div>
@@ -222,7 +234,11 @@
 <div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s"
      data-title="{{ day.title }}"
      data-tags="{% if day.tags %}{{ day.tags|join(' ') }}{% endif %}"
-     data-iron="{% if day.nutrition and day.nutrition.iron_mg %}{{ day.nutrition.iron_mg }}{% else %}0{% endif %}">
+     data-iron="{% if day.nutrition and day.nutrition.iron_mg %}{{ day.nutrition.iron_mg }}{% else %}0{% endif %}"
+     data-protein="{% if day.nutrition and day.nutrition.protein_g %}{{ day.nutrition.protein_g }}{% else %}0{% endif %}"
+     data-time-info="{% if day.time_info %}{{ day.time_info|e }}{% endif %}"
+     data-ingredients="{% if day.ingredients %}{{ day.ingredients|e }}{% endif %}"
+     data-kid="{% if day.kid_tip %}1{% else %}0{% endif %}">
     <a href="#day-{{ loop.index }}" class="day-card" onclick="toggleDetail(this, event)">
         <div class="day-emoji">{{ day.emoji }}</div>
         <div class="day-info">
@@ -336,6 +352,31 @@ document.addEventListener('DOMContentLoaded', function() {
     function isIronKeyword(token) {
         return token === '鉄分豊富' || token === '鉄分' || token === 'iron';
     }
+    function extractMinutes(text) {
+        const m = (text || '').match(/(\d+)\s*分/);
+        return m ? parseInt(m[1], 10) : 0;
+    }
+    function hasVegIngredients(text) {
+        const t = (text || '');
+        const words = ['野菜', 'にんじん', '玉ねぎ', 'ほうれん草', 'ピーマン', 'キャベツ', 'かぼちゃ', 'しめじ', 'きのこ', '大根', 'ごぼう'];
+        return words.some(w => t.includes(w));
+    }
+    function matchesToken(card, token) {
+        const title = normalizeText(card.dataset.title);
+        const tags = normalizeText(card.dataset.tags);
+        const ingredients = normalizeText(card.dataset.ingredients);
+        const iron = parseFloat(card.dataset.iron || '0');
+        const protein = parseFloat(card.dataset.protein || '0');
+        const timeInfo = card.dataset.timeInfo || '';
+        const timeMin = extractMinutes(timeInfo);
+        const kid = card.dataset.kid === '1';
+        if (isIronKeyword(token)) return iron >= 2.0;
+        if (token === '時短') return timeMin > 0 && timeMin <= 20;
+        if (token === '高たんぱく') return protein >= 25;
+        if (token === '子供人気') return kid;
+        if (token === '野菜たっぷり') return hasVegIngredients(card.dataset.ingredients || '');
+        return title.includes(token) || tags.includes(token) || ingredients.includes(token);
+    }
     function applyMenuSearchFilter() {
         if (!searchInput) return;
         const q = searchInput.value.trim();
@@ -345,17 +386,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const needIron = tokens.some(isIronKeyword);
         let visibleCount = 0;
         document.querySelectorAll('.card').forEach(function(card) {
-            const title = normalizeText(card.dataset.title);
-            const tags = normalizeText(card.dataset.tags);
-            const iron = parseFloat(card.dataset.iron || '0');
             let match = true;
             if (textTokens.length) {
                 match = textTokens.every(function(t) {
-                    return title.includes(t) || tags.includes(t);
+                    return matchesToken(card, t);
                 });
             }
             if (needIron) {
-                match = match && iron >= 2.0;
+                match = match && matchesToken(card, '鉄分');
             }
             card.style.display = match ? '' : 'none';
             if (match) visibleCount += 1;
@@ -438,6 +476,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 card.dataset.title = d.title || '';
                                 card.dataset.tags = (d.tags || []).join(' ');
                                 card.dataset.iron = (d.nutrition && d.nutrition.iron_mg) ? d.nutrition.iron_mg : 0;
+                                card.dataset.protein = (d.nutrition && d.nutrition.protein_g) ? d.nutrition.protein_g : 0;
+                                card.dataset.timeInfo = d.time_info || '';
+                                card.dataset.ingredients = d.ingredients || '';
+                                card.dataset.kid = d.kid_tip ? '1' : '0';
                                 var meta = dayInfo.querySelector('.day-meta');
                                 meta.innerHTML = (d.time_info ? '<span>⏱️ ' + d.time_info + '</span>' : '') + (d.papa_snack ? '<span>🍺 おつまみ有</span>' : '') + (d.nutrition && d.nutrition.calories ? '<span>📊 ' + d.nutrition.calories + 'kcal</span>' : '');
                                 var nutDiv = dayInfo.querySelector('.day-nutrition');
