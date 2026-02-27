@@ -348,6 +348,8 @@ let onlineLoading = false;
 let lastOnlineHtml = '';
 let lastOnlineItems = [];
 let tiktokLoading = false;
+let tiktokAvailable = null; // null=未確認, true=利用可能, false=未設定
+
 function scheduleSearch() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(searchRecipes, 120);
@@ -379,6 +381,17 @@ function toggleIngredient(chip) {
 function updateCount() {
     const count = document.querySelectorAll('.ing-chip.selected').length;
     document.getElementById('selectedCount').textContent = count + '個選択中';
+}
+
+// freeInput でも Enter で検索
+const freeInputEl = document.getElementById('freeInput');
+if (freeInputEl) {
+    freeInputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchRecipes();
+        }
+    });
 }
 
 const customInputEl = document.getElementById('customIngredient');
@@ -420,16 +433,22 @@ function addCustomIngredient(searchAfter) {
 }
 
 async function searchRecipes() {
+    // チップ選択食材（ローカルDB検索に使用）
     const selected = Array.from(document.querySelectorAll('.ing-chip.selected'))
         .map(c => c.textContent.trim());
+    // freeInputテキスト（ネット検索クエリに使用）
     const freeEl = document.getElementById('freeInput');
-    const freeInput = freeEl ? freeEl.value.trim() : '';
-    const typed = freeInput
-        ? freeInput.split(/[\s、,]+/).map(s => s.trim()).filter(Boolean)
+    const freeText = freeEl ? freeEl.value.trim() : '';
+    const typed = freeText
+        ? freeText.split(/[\s、,]+/).map(s => s.trim()).filter(Boolean)
         : [];
-    const allItems = Array.from(new Set([...selected, ...typed]));
 
-    if (allItems.length === 0) {
+    // ローカル検索: チップ選択のみ（テキスト入力は食材以外の言葉が混ざるため除外）
+    const localItems = selected;
+    // ネット検索: チップ + テキスト両方
+    const onlineItems = Array.from(new Set([...selected, ...typed]));
+
+    if (localItems.length === 0 && onlineItems.length === 0) {
         document.getElementById('resultsArea').innerHTML =
             '<div class="no-results"><div class="icon">👆</div><p>食材を1つ以上選んでください</p></div>';
         document.getElementById('onlineSection').style.display = 'none';
@@ -443,45 +462,59 @@ async function searchRecipes() {
         return;
     }
 
-    const query = allItems.join(' ');
-    const enc = encodeURIComponent(query);
-    const googleUrl = 'https://www.google.co.jp/search?q=' + encodeURIComponent(query + ' レシピ 日本人気');
+    // 検索リンクのクエリ: ネット検索用語（日本語レシピサイトに適切）
+    const linkQuery = onlineItems.join(' ');
+    const enc = encodeURIComponent(linkQuery);
+    const googleUrl = 'https://www.google.co.jp/search?q=' + encodeURIComponent(linkQuery + ' レシピ');
     const cookpadUrl = 'https://cookpad.com/search/' + enc;
     const delishUrl = 'https://delishkitchen.tv/search?q=' + enc;
     const kurashiruUrl = 'https://www.kurashiru.com/recipes?query=' + enc;
     const rakutenUrl = 'https://recipe.rakuten.co.jp/search/' + enc + '/';
 
     document.getElementById('onlineSection').style.display = 'block';
-    document.getElementById('localSection').style.display = 'block';
+    document.getElementById('localSection').style.display = localItems.length > 0 ? 'block' : 'none';
     document.getElementById('initialMessage').style.display = 'none';
     document.getElementById('onlineCta').style.display = 'block';
-    document.getElementById('tiktokSection').style.display = 'block';
-    document.getElementById('tiktokCta').style.display = 'block';
 
     document.getElementById('recipeSearchLinks').style.display = 'block';
     document.getElementById('recipeSearchLinks').innerHTML =
-        '<div class="recipe-search-links-title">🇯🇵 「' + query + '」で日本のレシピを検索</div>' +
+        '<div class="recipe-search-links-title">🇯🇵 「' + linkQuery + '」で日本のレシピを検索</div>' +
         '<a href="' + googleUrl + '" target="_blank" rel="noopener" class="recipe-search-link google">🔍 Google（日本の人気レシピ）</a>' +
         '<a href="' + cookpadUrl + '" target="_blank" rel="noopener" class="recipe-search-link cookpad">📖 クックパッド</a>' +
         '<a href="' + delishUrl + '" target="_blank" rel="noopener" class="recipe-search-link delish">🍳 デリッシュキッチン</a>' +
         '<a href="' + kurashiruUrl + '" target="_blank" rel="noopener" class="recipe-search-link kurashiru">📺 クラシル</a>' +
         '<a href="' + rakutenUrl + '" target="_blank" rel="noopener" class="recipe-search-link rakuten">🛒 楽天レシピ</a>';
-    document.getElementById('resultsArea').innerHTML =
-        '<div class="loading-online">🔍 検索中...</div>';
-    try {
-        const res = await fetch('/api/match-recipes', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({items: allItems})
-        });
-        if (!res.ok) throw new Error('fetch failed');
-        const recipes = await res.json();
-        renderResults(recipes);
-        fetchOnlineRecipes(allItems);
-        fetchTikTokRecipes();
-    } catch (e) {
+
+    // ローカルDB検索: チップ選択食材のみ
+    if (localItems.length > 0) {
         document.getElementById('resultsArea').innerHTML =
-            '<div class="no-results"><div class="icon">⚠️</div><p>検索に失敗しました。通信状況を確認してください。</p></div>';
+            '<div class="loading-online">🔍 検索中...</div>';
+        try {
+            const res = await fetch('/api/match-recipes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({items: localItems})
+            });
+            if (!res.ok) throw new Error('fetch failed');
+            const recipes = await res.json();
+            renderResults(recipes);
+        } catch (e) {
+            document.getElementById('resultsArea').innerHTML =
+                '<div class="no-results"><div class="icon">⚠️</div><p>検索に失敗しました。通信状況を確認してください。</p></div>';
+        }
+    } else {
+        document.getElementById('resultsArea').innerHTML =
+            '<div class="no-results"><div class="icon">💡</div><p>食材チップを選ぶと登録済みレシピを提案します</p></div>';
+    }
+
+    // ネット検索（英語APIなので食材名のみが有効）
+    fetchOnlineRecipes(onlineItems);
+
+    // TikTok（設定済みの場合のみ）
+    if (tiktokAvailable !== false) {
+        document.getElementById('tiktokSection').style.display = 'block';
+        document.getElementById('tiktokCta').style.display = 'block';
+        fetchTikTokRecipes();
     }
 }
 
@@ -550,6 +583,10 @@ async function fetchOnlineRecipes(items) {
         });
         const data = await res.json();
         const recipes = data.recipes || [];
+        // APIエラーをUIに表示
+        if (data.error) {
+            console.warn('search-online error:', data.error);
+        }
         if (!recipes.length) {
             if (lastOnlineHtml) {
                 onlineArea.innerHTML = lastOnlineHtml;
@@ -560,7 +597,7 @@ async function fetchOnlineRecipes(items) {
                     updated.textContent = `更新 ${hh}:${mm}（新規0件）`;
                 }
             } else {
-                onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした</div>';
+                onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした<br><small>上の日本語レシピリンクをお試しください</small></div>';
                 if (updated) updated.textContent = '';
             }
             onlineLoading = false;
@@ -568,13 +605,17 @@ async function fetchOnlineRecipes(items) {
             return;
         }
         onlineArea.innerHTML = recipes.map(function(r) {
+            const imgSrc = r.image || '';
             return `
             <a class="online-card" href="${r.url || '#'}" target="_blank" rel="noopener">
-                <img class="online-img" src="${r.image || 'https://dummyimage.com/160x160/eeeeee/aaaaaa&text=Recipe'}" alt="">
+                ${imgSrc
+                    ? `<img class="online-img" src="${imgSrc}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                    : `<div class="online-img" style="background:#eee;display:flex;align-items:center;justify-content:center;font-size:28px;">🍽️</div>`
+                }
                 <div class="online-info">
                     <div class="online-title-text">${r.title || 'レシピ'}</div>
                     <div class="online-meta">${r.source || 'Web'}</div>
-                    ${r.nutrition ? `<div class="online-nutrition">P${r.nutrition.protein_g || '-'} F${r.nutrition.fat_g || '-'} C${r.nutrition.carbs_g || '-'}</div>` : ''}
+                    ${r.calories ? `<div class="online-nutrition">${r.calories}kcal・P${r.protein || '-'}g</div>` : ''}
                 </div>
             </a>`;
         }).join('');
@@ -612,15 +653,23 @@ async function fetchTikTokRecipes() {
         const data = await res.json();
         const recipes = data.recipes || [];
         if (!recipes.length) {
-            const msg = data.error ? `取得できませんでした（${data.error}）` : '該当するレシピがありません';
-            area.innerHTML = `<div class="no-online">${msg}</div>`;
+            // 「未設定」の場合はセクション自体を非表示にする
+            if (data.error && data.error.includes('未設定')) {
+                tiktokAvailable = false;
+                document.getElementById('tiktokSection').style.display = 'none';
+                document.getElementById('tiktokCta').style.display = 'none';
+                area.innerHTML = '';
+            } else {
+                area.innerHTML = '<div class="no-online">該当するレシピがありません</div>';
+            }
             if (updated) updated.textContent = '';
             return;
         }
+        tiktokAvailable = true;
         area.innerHTML = recipes.map(function(r) {
             return `
             <a class="online-card" href="${r.url || '#'}" target="_blank" rel="noopener">
-                <img class="online-img" src="${r.image || 'https://dummyimage.com/160x160/eeeeee/aaaaaa&text=TikTok'}" alt="">
+                <img class="online-img" src="${r.image || ''}" alt="" loading="lazy" onerror="this.style.display='none'">
                 <div class="online-info">
                     <div class="online-title-text">${r.title || 'TikTokレシピ'}</div>
                     <div class="online-meta">${r.source || 'TikTok'}</div>
