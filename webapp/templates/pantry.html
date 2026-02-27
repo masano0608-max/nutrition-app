@@ -264,8 +264,17 @@ function scheduleSearch() {
     searchTimer = setTimeout(searchRecipes, 120);
 }
 const allIngredientsEl = document.getElementById('allIngredients');
+let lastTouchTime = 0;
 if (allIngredientsEl) {
+    allIngredientsEl.addEventListener('touchend', function(e) {
+        const chip = e.target.closest('.ing-chip');
+        if (!chip) return;
+        lastTouchTime = Date.now();
+        e.preventDefault();
+        toggleIngredient(chip);
+    }, { passive: false });
     allIngredientsEl.addEventListener('click', function(e) {
+        if (Date.now() - lastTouchTime < 400) return;
         const chip = e.target.closest('.ing-chip');
         if (chip) toggleIngredient(chip);
     });
