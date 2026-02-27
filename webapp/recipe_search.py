@@ -233,16 +233,7 @@ def _search_edamam(ingredients: list[str], max_results: int) -> list[dict]:
 def search_online_recipes(ingredients: list[str], max_results: int = 12) -> list[dict]:
     """
     食材からネットのレシピを検索
-    Edamam設定時はEdamamを優先、未設定時はTheMealDB（完全無料）を使用
+    英語レシピ（TheMealDB/Edamam）は使用しない。日本語レシピはGoogle/クックパッドリンクで案内。
     """
-    if not ingredients:
-        return []
-
-    # Edamamが設定されていれば優先（栄養データ付き）
-    if os.getenv("EDAMAM_APP_ID") and os.getenv("EDAMAM_APP_KEY"):
-        recipes = _search_edamam(ingredients, max_results)
-        if recipes:
-            return recipes
-
-    # TheMealDB（登録不要・完全無料）
-    return _search_themealdb(ingredients, max_results)
+    # 英語レシピAPIは無効化（日本語レシピのみ利用）
+    return []

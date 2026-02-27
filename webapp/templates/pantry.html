@@ -589,18 +589,9 @@ async function fetchOnlineRecipes(items) {
             console.warn('search-online error:', data.error);
         }
         if (!recipes.length) {
-            if (lastOnlineHtml) {
-                onlineArea.innerHTML = lastOnlineHtml;
-                if (updated) {
-                    const now = new Date();
-                    const hh = String(now.getHours()).padStart(2, '0');
-                    const mm = String(now.getMinutes()).padStart(2, '0');
-                    updated.textContent = `更新 ${hh}:${mm}（新規0件）`;
-                }
-            } else {
-                onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした<br><small>上の日本語レシピリンクをお試しください</small></div>';
-                if (updated) updated.textContent = '';
-            }
+            lastOnlineHtml = '';
+            onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした<br><small>上の日本語レシピリンクをお試しください</small></div>';
+            if (updated) updated.textContent = '';
             onlineLoading = false;
             if (refreshBtn) refreshBtn.disabled = false;
             return;
@@ -629,13 +620,9 @@ async function fetchOnlineRecipes(items) {
             updated.textContent = `更新 ${hh}:${mm}`;
         }
     } catch (e) {
-        if (lastOnlineHtml) {
-            onlineArea.innerHTML = lastOnlineHtml;
-            if (updated) updated.textContent = '更新に失敗しました';
-        } else {
-            onlineArea.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
-            if (updated) updated.textContent = '';
-        }
+        lastOnlineHtml = '';
+        onlineArea.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
+        if (updated) updated.textContent = '';
     }
     onlineLoading = false;
     if (refreshBtn) refreshBtn.disabled = false;

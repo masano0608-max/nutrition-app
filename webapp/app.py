@@ -12,7 +12,7 @@ import json
 import os
 import random
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from pathlib import Path
 
 try:
@@ -110,6 +110,41 @@ def get_latest_meal_plan():
     return None
 
 
+def get_current_season() -> str:
+    """現在の季節を返す（春3-5, 夏6-8, 秋9-11, 冬12-2）"""
+    m = date.today().month
+    if m in (3, 4, 5):
+        return "春"
+    if m in (6, 7, 8):
+        return "夏"
+    if m in (9, 10, 11):
+        return "秋"
+    return "冬"
+
+
+def get_near_events() -> list:
+    """直近のイベントを返す（±7日以内）"""
+    today = date.today()
+    near = []
+    # 月日ベースのイベント
+    events = [
+        (1, 1, "お正月"), (1, 2, "お正月"), (1, 3, "年末年始"),
+        (2, 3, "節分"), (2, 4, "節分"),
+        (3, 3, "ひな祭り"),
+        (5, 5, "子どもの日"),
+        (7, 7, "七夕"),
+        (10, 31, "ハロウィン"),
+        (12, 22, "冬至"), (12, 23, "冬至"),
+        (12, 24, "クリスマス"), (12, 25, "クリスマス"),
+        (12, 28, "年末年始"), (12, 29, "年末年始"), (12, 31, "年末年始"),
+    ]
+    for mm, dd, ev in events:
+        ev_date = date(today.year, mm, dd)
+        if abs((ev_date - today).days) <= 14:
+            near.append(ev)
+    return list(dict.fromkeys(near))  # 重複除去
+
+
 # 献立パターン: タンパク質の並び順（バリエーション増）
 PATTERN_PROTEIN_ORDER = {
     "default": ["chicken", "fish", "pork", "tofu", "egg", "chicken", "fish"],
@@ -130,19 +165,29 @@ def select_weekly_menu_by_pattern(recipes: list, pattern: str = "default") -> li
         # 時短: 15分以下を優先
         quick = [r for r in recipes if r.get("cooking_time_min", 99) <= 15]
         pool = quick if len(quick) >= 7 else recipes
+    elif pattern == "seasonal":
+        # 季節・イベントに合ったレシピを優先
+        season = get_current_season()
+        events = get_near_events()
+        seasonal = [
+            r for r in recipes
+            if season in r.get("seasons", []) or any(ev in r.get("events", []) for ev in events)
+        ]
+        pool = seasonal if len(seasonal) >= 7 else recipes
     else:
         pool = recipes
 
-    order = PATTERN_PROTEIN_ORDER.get(pattern, PATTERN_PROTEIN_ORDER["default"])
+    order = PATTERN_PROTEIN_ORDER.get(pattern, PATTERN_PROTEIN_ORDER["default"]) if pattern != "short" else PATTERN_PROTEIN_ORDER["default"]
     if pattern != "short":
         random.shuffle(order)
     else:
         order = ["chicken", "egg", "tofu", "fish", "pork", "chicken", "tofu"]
 
+    pool_ids = {r["id"] for r in pool}
     selected = []
     used_ids = set()
     for protein in order:
-        candidates = [r for r in by_protein.get(protein, pool) if r["id"] not in used_ids]
+        candidates = [r for r in by_protein.get(protein, pool) if r["id"] not in used_ids and r["id"] in pool_ids]
         if not candidates:
             candidates = [r for r in pool if r["id"] not in used_ids]
         if candidates:
@@ -174,13 +219,16 @@ def _recipe_to_day(recipe: dict, day_name: str, day_date: str) -> dict:
         papa_txt = f"{papa.get('title', '')} {papa.get('description', '')}".strip()
     elif isinstance(papa, str):
         papa_txt = papa
+    tags = list(recipe.get("nutrition_tags", []))
+    tags.extend(recipe.get("seasons", []))
+    tags.extend(recipe.get("events", []))
     return {
         "day_name": day_name,
         "title": recipe.get("title", ""),
         "emoji": recipe.get("emoji", "🍽️"),
         "date": day_date,
         "time_info": f"{recipe.get('cooking_time_min', 20)}分",
-        "tags": recipe.get("nutrition_tags", []),
+        "tags": tags,
         "ingredients": ing_text,
         "steps": recipe.get("steps", []),
         "kid_tip": kid_tip,
@@ -372,7 +420,7 @@ def match_recipes(pantry_items):
 @app.route("/")
 def index():
     pattern = request.args.get("pattern", "default")
-    if pattern in ("wafu", "yoshoku", "short"):
+    if pattern in ("wafu", "yoshoku", "short", "seasonal"):
         plan = get_meal_plan_by_pattern(pattern)
     else:
         plan = get_latest_meal_plan()
@@ -388,7 +436,7 @@ def index():
 def api_meal_plan():
     """パターン指定で献立を取得（JSON）"""
     pattern = request.args.get("pattern", "default")
-    if pattern in ("wafu", "yoshoku", "short"):
+    if pattern in ("wafu", "yoshoku", "short", "seasonal"):
         plan = get_meal_plan_by_pattern(pattern)
     else:
         plan = get_latest_meal_plan()

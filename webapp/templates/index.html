@@ -304,6 +304,7 @@
 {% block content %}
 <div class="pattern-tabs">
     <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
+    <a href="?pattern=seasonal" class="pattern-tab {% if current_pattern == 'seasonal' %}active{% endif %}">🌸 季節</a>
     <a href="?pattern=wafu" class="pattern-tab {% if current_pattern == 'wafu' %}active{% endif %}">和風</a>
     <a href="?pattern=yoshoku" class="pattern-tab {% if current_pattern == 'yoshoku' %}active{% endif %}">洋食</a>
     <a href="?pattern=short" class="pattern-tab {% if current_pattern == 'short' %}active{% endif %}">時短</a>
@@ -320,6 +321,13 @@
     </div>
 </div>
 <div class="trend-chips" id="trendChips">
+    <button type="button" class="trend-chip" data-search="春">🌸 春</button>
+    <button type="button" class="trend-chip" data-search="夏">☀️ 夏</button>
+    <button type="button" class="trend-chip" data-search="秋">🍂 秋</button>
+    <button type="button" class="trend-chip" data-search="冬">❄️ 冬</button>
+    <button type="button" class="trend-chip" data-search="クリスマス">🎄 クリスマス</button>
+    <button type="button" class="trend-chip" data-search="ひな祭り">🎎 ひな祭り</button>
+    <button type="button" class="trend-chip" data-search="お正月">🎌 お正月</button>
     <button type="button" class="trend-chip" data-search="時短">⏱️ 時短</button>
     <button type="button" class="trend-chip" data-search="高たんぱく">💪 高たんぱく</button>
     <button type="button" class="trend-chip" data-search="鉄分">🩸 鉄分</button>
@@ -331,7 +339,7 @@
     <span class="icon">🫥</span>該当する献立がありません
 </div>
 {% if plan %}
-<div class="week-header">{% if plan.pattern and plan.pattern in ['default','wafu','yoshoku','short'] %}{{ {'default':'通常','wafu':'和風','yoshoku':'洋食','short':'時短'}[plan.pattern] }}{% else %}{{ plan.filename.replace('.md','').replace('2026-W10_','').replace('pattern_','') }}{% endif %}</div>
+<div class="week-header">{% if plan.pattern and plan.pattern in ['default','seasonal','wafu','yoshoku','short'] %}{{ {'default':'通常','seasonal':'季節・イベント','wafu':'和風','yoshoku':'洋食','short':'時短'}[plan.pattern] }}{% else %}{{ plan.filename.replace('.md','').replace('2026-W10_','').replace('pattern_','') }}{% endif %}</div>
 
 {% for day in plan.days %}
 <div class="card animate-in" style="animation-delay: {{ loop.index * 0.05 }}s"

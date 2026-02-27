@@ -46,7 +46,13 @@ METHODS = [
     ("丼", "丼にする", 15),
     ("グラタン", "トースターで焼く", 20),
     ("スープ", "スープ仕立て", 15),
+    ("焼き", "オーブンで焼く", 25),
+    ("蒸し", "蒸し器で蒸す", 20),
+    ("和え", "和える", 10),
 ]
+
+SEASONS = ["春", "夏", "秋", "冬"]
+EVENTS = ["お正月", "節分", "ひな祭り", "子どもの日", "七夕", "敬老の日", "ハロウィン", "クリスマス", "冬至", "年末年始"]
 
 SEASONINGS = [
     "醤油", "みりん", "砂糖", "ごま油", "塩こしょう", "無添加コンソメ",
@@ -96,6 +102,14 @@ def make_recipe(i: int) -> dict:
         "folate_mcg": random.randint(30, 120),
     }
 
+    # 季節・イベントタグ（70%は通年、30%は季節付き）
+    seasons = []
+    events = []
+    if random.random() < 0.3:
+        seasons = random.sample(SEASONS, k=random.randint(1, 2))
+    if random.random() < 0.12:
+        events = random.sample(EVENTS, k=random.randint(1, 2))
+
     return {
         "id": slugify(title),
         "title": jp_title,
@@ -116,6 +130,8 @@ def make_recipe(i: int) -> dict:
             "description": "ブラックペッパーや七味で味変。",
         },
         "nutrition_tags": ["タンパク質", "ビタミン", "食物繊維"],
+        "seasons": seasons,
+        "events": events,
         "nutrition": nutrition,
     }
 
