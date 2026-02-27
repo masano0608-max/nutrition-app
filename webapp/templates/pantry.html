@@ -227,7 +227,7 @@
 
     <div class="search-input-wrap compact">
         <input type="text" class="search-input" id="freeInput" placeholder="例: 鶏むね ほうれん草 たまご（スペース/、区切り）">
-        <button class="search-btn" onclick="searchRecipes()">検索</button>
+        <button class="search-btn" id="searchBtn" onclick="searchRecipes()">検索</button>
     </div>
     <div class="search-input-wrap secondary">
         <input type="text" class="search-input" id="customIngredient" placeholder="一覧から選ばずに1つ追加...">
@@ -262,6 +262,13 @@ let searchTimer = null;
 function scheduleSearch() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(searchRecipes, 120);
+}
+const allIngredientsEl = document.getElementById('allIngredients');
+if (allIngredientsEl) {
+    allIngredientsEl.addEventListener('click', function(e) {
+        const chip = e.target.closest('.ing-chip');
+        if (chip) toggleIngredient(chip);
+    });
 }
 function toggleIngredient(chip) {
     chip.classList.toggle('selected');
@@ -342,12 +349,15 @@ async function searchRecipes() {
         '<a href="' + delishUrl + '" target="_blank" rel="noopener" class="recipe-search-link delish">🍳 デリッシュキッチン</a>' +
         '<a href="' + kurashiruUrl + '" target="_blank" rel="noopener" class="recipe-search-link kurashiru">📺 クラシル</a>' +
         '<a href="' + rakutenUrl + '" target="_blank" rel="noopener" class="recipe-search-link rakuten">🛒 楽天レシピ</a>';
+    document.getElementById('resultsArea').innerHTML =
+        '<div class="loading-online">🔍 検索中...</div>';
     try {
         const res = await fetch('/api/match-recipes', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({items: allItems})
         });
+        if (!res.ok) throw new Error('fetch failed');
         const recipes = await res.json();
         renderResults(recipes);
     } catch (e) {
