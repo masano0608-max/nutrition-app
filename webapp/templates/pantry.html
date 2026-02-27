@@ -133,6 +133,10 @@
     cursor: pointer;
 }
 .online-refresh:active { transform: scale(0.98); }
+.online-refresh:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
 .online-updated { font-size: 11px; color: var(--text-sub); }
 .online-card {
     display: flex;
@@ -316,6 +320,18 @@
 <div class="online-cta" id="onlineCta" style="display:none;">今選んだ食材をもとに、ネット上の人気レシピを表示します。</div>
 <div id="onlineResults"></div>
 
+<div class="section-title online-section" id="tiktokSection" style="display:none;">
+    <div class="online-title">
+        <span class="title-left">🎵 TikTokの人気レシピ</span>
+        <span class="online-actions">
+            <button type="button" class="online-refresh" id="tiktokRefreshBtn">🔄 更新</button>
+            <span class="online-updated" id="tiktokUpdated"></span>
+        </span>
+    </div>
+</div>
+<div class="online-cta" id="tiktokCta" style="display:none;">TikTokの人気レシピを表示します。</div>
+<div id="tiktokResults"></div>
+
 <div class="section-title" id="localSection" style="display:none;">🍳 登録済みレシピ</div>
 <div class="results-area" id="resultsArea">
     <div class="no-results" id="initialMessage">
@@ -328,6 +344,10 @@
 {% block scripts %}
 <script>
 let searchTimer = null;
+let onlineLoading = false;
+let lastOnlineHtml = '';
+let lastOnlineItems = [];
+let tiktokLoading = false;
 function scheduleSearch() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(searchRecipes, 120);
@@ -417,6 +437,9 @@ async function searchRecipes() {
         document.getElementById('recipeSearchLinks').style.display = 'none';
         document.getElementById('onlineCta').style.display = 'none';
         document.getElementById('onlineResults').innerHTML = '';
+        document.getElementById('tiktokSection').style.display = 'none';
+        document.getElementById('tiktokCta').style.display = 'none';
+        document.getElementById('tiktokResults').innerHTML = '';
         return;
     }
 
@@ -432,6 +455,8 @@ async function searchRecipes() {
     document.getElementById('localSection').style.display = 'block';
     document.getElementById('initialMessage').style.display = 'none';
     document.getElementById('onlineCta').style.display = 'block';
+    document.getElementById('tiktokSection').style.display = 'block';
+    document.getElementById('tiktokCta').style.display = 'block';
 
     document.getElementById('recipeSearchLinks').style.display = 'block';
     document.getElementById('recipeSearchLinks').innerHTML =
@@ -453,6 +478,7 @@ async function searchRecipes() {
         const recipes = await res.json();
         renderResults(recipes);
         fetchOnlineRecipes(allItems);
+        fetchTikTokRecipes();
     } catch (e) {
         document.getElementById('resultsArea').innerHTML =
             '<div class="no-results"><div class="icon">⚠️</div><p>検索に失敗しました。通信状況を確認してください。</p></div>';
@@ -511,6 +537,10 @@ function renderResults(recipes) {
 async function fetchOnlineRecipes(items) {
     const onlineArea = document.getElementById('onlineResults');
     const updated = document.getElementById('onlineUpdated');
+    if (onlineLoading) return;
+    onlineLoading = true;
+    const refreshBtn = document.getElementById('onlineRefreshBtn');
+    if (refreshBtn) refreshBtn.disabled = true;
     onlineArea.innerHTML = '<div class="loading-online">ネットの人気レシピを取得中...</div>';
     try {
         const res = await fetch('/api/search-online', {
@@ -521,8 +551,20 @@ async function fetchOnlineRecipes(items) {
         const data = await res.json();
         const recipes = data.recipes || [];
         if (!recipes.length) {
-            onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした</div>';
-            if (updated) updated.textContent = '';
+            if (lastOnlineHtml) {
+                onlineArea.innerHTML = lastOnlineHtml;
+                if (updated) {
+                    const now = new Date();
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const mm = String(now.getMinutes()).padStart(2, '0');
+                    updated.textContent = `更新 ${hh}:${mm}（新規0件）`;
+                }
+            } else {
+                onlineArea.innerHTML = '<div class="no-online">該当するネットレシピが見つかりませんでした</div>';
+                if (updated) updated.textContent = '';
+            }
+            onlineLoading = false;
+            if (refreshBtn) refreshBtn.disabled = false;
             return;
         }
         onlineArea.innerHTML = recipes.map(function(r) {
@@ -536,6 +578,8 @@ async function fetchOnlineRecipes(items) {
                 </div>
             </a>`;
         }).join('');
+        lastOnlineHtml = onlineArea.innerHTML;
+        lastOnlineItems = items;
         if (updated) {
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
@@ -543,8 +587,58 @@ async function fetchOnlineRecipes(items) {
             updated.textContent = `更新 ${hh}:${mm}`;
         }
     } catch (e) {
-        onlineArea.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
+        if (lastOnlineHtml) {
+            onlineArea.innerHTML = lastOnlineHtml;
+            if (updated) updated.textContent = '更新に失敗しました';
+        } else {
+            onlineArea.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
+            if (updated) updated.textContent = '';
+        }
+    }
+    onlineLoading = false;
+    if (refreshBtn) refreshBtn.disabled = false;
+}
+
+async function fetchTikTokRecipes() {
+    const area = document.getElementById('tiktokResults');
+    const updated = document.getElementById('tiktokUpdated');
+    if (tiktokLoading) return;
+    tiktokLoading = true;
+    const btn = document.getElementById('tiktokRefreshBtn');
+    if (btn) btn.disabled = true;
+    area.innerHTML = '<div class="loading-online">TikTokの人気レシピを取得中...</div>';
+    try {
+        const res = await fetch('/api/tiktok-trending');
+        const data = await res.json();
+        const recipes = data.recipes || [];
+        if (!recipes.length) {
+            const msg = data.error ? `取得できませんでした（${data.error}）` : '該当するレシピがありません';
+            area.innerHTML = `<div class="no-online">${msg}</div>`;
+            if (updated) updated.textContent = '';
+            return;
+        }
+        area.innerHTML = recipes.map(function(r) {
+            return `
+            <a class="online-card" href="${r.url || '#'}" target="_blank" rel="noopener">
+                <img class="online-img" src="${r.image || 'https://dummyimage.com/160x160/eeeeee/aaaaaa&text=TikTok'}" alt="">
+                <div class="online-info">
+                    <div class="online-title-text">${r.title || 'TikTokレシピ'}</div>
+                    <div class="online-meta">${r.source || 'TikTok'}</div>
+                </div>
+            </a>`;
+        }).join('');
+        if (updated) {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            updated.textContent = `更新 ${hh}:${mm}`;
+        }
+    } catch (e) {
+        area.innerHTML = '<div class="no-online">取得に失敗しました。もう一度お試しください。</div>';
         if (updated) updated.textContent = '';
+    } finally {
+        tiktokLoading = false;
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -561,6 +655,13 @@ if (refreshBtn) {
         const allItems = Array.from(new Set([...selected, ...typed]));
         if (!allItems.length) return;
         fetchOnlineRecipes(allItems);
+    });
+}
+
+const tiktokRefreshBtn = document.getElementById('tiktokRefreshBtn');
+if (tiktokRefreshBtn) {
+    tiktokRefreshBtn.addEventListener('click', function() {
+        fetchTikTokRecipes();
     });
 }
 </script>

@@ -5,6 +5,7 @@ __pycache__/
 venv/
 logs/
 data/
+data/recipes_db_backup_*.json
 credentials.json
 token.json
 github_token.txt

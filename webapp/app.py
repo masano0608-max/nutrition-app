@@ -21,6 +21,8 @@ try:
 except ImportError:
     pass
 from flask import Flask, render_template, request, jsonify
+import urllib.request
+import urllib.error
 
 app = Flask(__name__)
 
@@ -581,6 +583,44 @@ def api_weekly_run():
         return jsonify({"ok": True, "message": "週次処理が完了しました"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ========== TikTok 人気レシピ（任意連携） ==========
+@app.route("/api/tiktok-trending", methods=["GET"])
+def api_tiktok_trending():
+    """TikTokの人気レシピを取得（環境変数設定時のみ）"""
+    api_url = os.getenv("TIKTOK_API_URL", "").strip()
+    api_token = os.getenv("TIKTOK_API_TOKEN", "").strip()
+    if not api_url or not api_token:
+        return jsonify({"recipes": [], "error": "TikTok連携が未設定です"}), 200
+    try:
+        req = urllib.request.Request(
+            api_url,
+            headers={
+                "Authorization": f"Bearer {api_token}",
+                "Accept": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=12) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        # 可能な限り共通フォーマットに整形
+        items = data.get("data") if isinstance(data, dict) else data
+        recipes = []
+        if isinstance(items, list):
+            for it in items[:12]:
+                title = it.get("title") or it.get("desc") or "TikTokレシピ"
+                url = it.get("url") or it.get("share_url") or it.get("link")
+                cover = it.get("cover") or it.get("image") or (it.get("video") or {}).get("cover")
+                author = (it.get("author") or {}).get("name") or it.get("author_name") or "TikTok"
+                recipes.append({
+                    "title": title,
+                    "url": url,
+                    "image": cover,
+                    "source": author,
+                })
+        return jsonify({"recipes": recipes})
+    except Exception as e:
+        return jsonify({"recipes": [], "error": str(e)}), 200
 
 
 if __name__ == "__main__":
