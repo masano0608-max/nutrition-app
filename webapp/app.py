@@ -26,6 +26,22 @@ app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+@app.context_processor
+def inject_app_rev():
+    """テンプレートでデプロイ済みリビジョンを確認"""
+    return {"app_rev": os.getenv("APP_REV", "local")}
+
+
+@app.after_request
+def add_no_cache_headers(resp):
+    """HTMLはキャッシュを避けて最新を表示"""
+    content_type = resp.headers.get("Content-Type", "")
+    if content_type.startswith("text/html"):
+        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+    return resp
+
 # Cloud Run 起動時: GCS からデータ同期
 try:
     from webapp.cloud_storage import sync_from_gcs

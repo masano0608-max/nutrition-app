@@ -75,18 +75,77 @@
 .pattern-tab.active { color: white; background: var(--primary); border-color: var(--primary); }
 .menu-search {
     margin: 10px auto 6px;
-    max-width: 520px;
+    max-width: 560px;
     padding: 0 12px;
+}
+.menu-search-card {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 12px;
+    border: 1px solid var(--border);
+}
+.menu-search-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.menu-search-row {
+    position: relative;
 }
 .menu-search input {
     width: 100%;
-    padding: 10px 14px;
+    padding: 11px 38px 11px 36px;
     border: 2px solid var(--border);
     border-radius: 12px;
     font-size: 14px;
     outline: none;
+    background: #fff;
 }
 .menu-search input:focus { border-color: var(--primary); }
+.menu-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-sub);
+    font-size: 16px;
+}
+.menu-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: var(--bg-page);
+    color: var(--text-sub);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+}
+.menu-search-clear:active { transform: translateY(-50%) scale(0.96); }
+.menu-search-help {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 6px;
+}
+.menu-search-empty {
+    text-align: center;
+    padding: 24px 16px 8px;
+    color: var(--text-sub);
+    font-size: 13px;
+}
+.menu-search-empty .icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+    display: block;
+}
 .change-menu-btn { margin-top: 10px; font-size: 12px; padding: 6px 12px; }
 .alt-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .alt-modal.open { display: flex; }
@@ -103,7 +162,18 @@
 
 {% block content %}
 <div class="menu-search">
-    <input type="text" id="menuSearchInput" placeholder="例: 鉄分豊富 / 魚 / ハンバーグ">
+    <div class="menu-search-card">
+        <div class="menu-search-label">🔎 献立を検索</div>
+        <div class="menu-search-row">
+            <span class="menu-search-icon">🔍</span>
+            <input type="text" id="menuSearchInput" placeholder="例: 鉄分豊富 魚 ハンバーグ">
+            <button type="button" id="menuSearchClear" class="menu-search-clear" aria-label="検索をクリア">×</button>
+        </div>
+        <div class="menu-search-help">複数キーワードはスペース/、/カンマ区切り</div>
+    </div>
+</div>
+<div class="menu-search-empty" id="menuSearchEmpty" style="display:none;">
+    <span class="icon">🫥</span>該当する献立がありません
 </div>
 <div class="pattern-tabs">
     <a href="?pattern=default" class="pattern-tab {% if current_pattern == 'default' %}active{% endif %}">通常</a>
@@ -223,6 +293,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!modal) return;
 
     const searchInput = document.getElementById('menuSearchInput');
+    const searchClear = document.getElementById('menuSearchClear');
+    const searchEmpty = document.getElementById('menuSearchEmpty');
     let isComposing = false;
     function normalizeText(value) {
         return (value || '').toLowerCase();
@@ -237,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tokens = qLower ? qLower.split(/[\s、,]+/).filter(Boolean) : [];
         const textTokens = tokens.filter(t => !isIronKeyword(t));
         const needIron = tokens.some(isIronKeyword);
+        let visibleCount = 0;
         document.querySelectorAll('.card').forEach(function(card) {
             const title = normalizeText(card.dataset.title);
             const tags = normalizeText(card.dataset.tags);
@@ -251,7 +324,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 match = match && iron >= 2.0;
             }
             card.style.display = match ? '' : 'none';
+            if (match) visibleCount += 1;
         });
+        if (searchEmpty) {
+            searchEmpty.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+        }
+        if (searchClear) {
+            searchClear.style.display = q ? 'block' : 'none';
+        }
     }
     if (searchInput) {
         searchInput.addEventListener('compositionstart', function() { isComposing = true; });
@@ -262,6 +342,13 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('input', function() {
             if (isComposing) return;
             applyMenuSearchFilter();
+        });
+    }
+    if (searchClear && searchInput) {
+        searchClear.addEventListener('click', function() {
+            searchInput.value = '';
+            applyMenuSearchFilter();
+            searchInput.focus();
         });
     }
 
