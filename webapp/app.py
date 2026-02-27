@@ -541,7 +541,7 @@ def api_save_memo():
 # ========== 週次自動実行（Cloud Scheduler 用） ==========
 @app.route("/api/weekly-run", methods=["POST"])
 def api_weekly_run():
-    """毎週金曜に Cloud Scheduler から呼ばれる"""
+    """毎週土曜朝に Cloud Scheduler から呼ばれる"""
     secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
     if secret != os.getenv("CRON_SECRET", ""):
         return jsonify({"error": "unauthorized"}), 401

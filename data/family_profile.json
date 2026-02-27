@@ -38,7 +38,7 @@
   "cooking_preferences": {
     "max_cooking_time_minutes": 20,
     "shopping_day": "土日",
-    "reminder_day": "金曜日の夜",
+    "reminder_day": "土曜日の朝",
     "meal_type": "夕食",
     "notes": [
       "栄養バランス重視",

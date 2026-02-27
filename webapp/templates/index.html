@@ -223,24 +223,45 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!modal) return;
 
     const searchInput = document.getElementById('menuSearchInput');
+    let isComposing = false;
+    function normalizeText(value) {
+        return (value || '').toLowerCase();
+    }
+    function isIronKeyword(token) {
+        return token === '鉄分豊富' || token === '鉄分' || token === 'iron';
+    }
+    function applyMenuSearchFilter() {
+        if (!searchInput) return;
+        const q = searchInput.value.trim();
+        const qLower = normalizeText(q);
+        const tokens = qLower ? qLower.split(/[\s、,]+/).filter(Boolean) : [];
+        const textTokens = tokens.filter(t => !isIronKeyword(t));
+        const needIron = tokens.some(isIronKeyword);
+        document.querySelectorAll('.card').forEach(function(card) {
+            const title = normalizeText(card.dataset.title);
+            const tags = normalizeText(card.dataset.tags);
+            const iron = parseFloat(card.dataset.iron || '0');
+            let match = true;
+            if (textTokens.length) {
+                match = textTokens.every(function(t) {
+                    return title.includes(t) || tags.includes(t);
+                });
+            }
+            if (needIron) {
+                match = match && iron >= 2.0;
+            }
+            card.style.display = match ? '' : 'none';
+        });
+    }
     if (searchInput) {
+        searchInput.addEventListener('compositionstart', function() { isComposing = true; });
+        searchInput.addEventListener('compositionend', function() {
+            isComposing = false;
+            applyMenuSearchFilter();
+        });
         searchInput.addEventListener('input', function() {
-            const q = searchInput.value.trim();
-            const qLower = q.toLowerCase();
-            const wantIron = qLower.includes('鉄分豊富') || qLower.includes('鉄分') || qLower.includes('iron');
-            document.querySelectorAll('.card').forEach(function(card) {
-                const title = (card.dataset.title || '').toLowerCase();
-                const tags = (card.dataset.tags || '').toLowerCase();
-                const iron = parseFloat(card.dataset.iron || '0');
-                let match = true;
-                if (q) {
-                    match = title.includes(qLower) || tags.includes(qLower);
-                    if (wantIron) {
-                        match = iron >= 2.0;
-                    }
-                }
-                card.style.display = match ? '' : 'none';
-            });
+            if (isComposing) return;
+            applyMenuSearchFilter();
         });
     }
 
@@ -284,6 +305,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 dayCard.querySelector('.day-emoji').textContent = d.emoji || '🍽️';
                                 dayInfo.querySelector('.day-label').textContent = d.day_name + (d.date ? '（' + d.date + '）' : '');
                                 dayInfo.querySelector('.day-title').textContent = d.title || '';
+                                card.dataset.title = d.title || '';
+                                card.dataset.tags = (d.tags || []).join(' ');
+                                card.dataset.iron = (d.nutrition && d.nutrition.iron_mg) ? d.nutrition.iron_mg : 0;
                                 var meta = dayInfo.querySelector('.day-meta');
                                 meta.innerHTML = (d.time_info ? '<span>⏱️ ' + d.time_info + '</span>' : '') + (d.papa_snack ? '<span>🍺 おつまみ有</span>' : '') + (d.nutrition && d.nutrition.calories ? '<span>📊 ' + d.nutrition.calories + 'kcal</span>' : '');
                                 var nutDiv = dayInfo.querySelector('.day-nutrition');
@@ -310,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (d.recipe_id) parts.push('<button type="button" class="btn btn-outline change-menu-btn" data-day-index="' + dayIndex + '" data-recipe-id="' + (d.recipe_id||'') + '" data-day-name="' + (d.day_name||'') + '" data-day-date="' + (d.date||'') + '">この日のメニューを変更</button>');
                                 detail.innerHTML = parts.join('');
                                 modal.classList.remove('open');
+                                applyMenuSearchFilter();
                             } catch (err) { console.error(err); }
                         });
                     });

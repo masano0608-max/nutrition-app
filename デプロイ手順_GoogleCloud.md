@@ -107,7 +107,7 @@ gcloud run deploy nutrition-app \
 
 ## 5. Cloud Scheduler で週次実行を設定
 
-毎週金曜 20:00 に週次処理（特売チェック・献立更新・カレンダーリマインド）を実行します。
+毎週土曜 08:00 に週次処理（特売チェック・献立更新・カレンダーリマインド）を実行します。
 
 ```bash
 # まず Cloud Run の URL を取得
@@ -126,14 +126,14 @@ gcloud run services add-iam-policy-binding nutrition-app \
 # ジョブを作成（CRON_SECRET は 4 でメモした値に置き換え）
 gcloud scheduler jobs create http weekly-nutrition-job \
   --location asia-northeast1 \
-  --schedule="0 20 * * 5" \
+  --schedule="0 8 * * 6" \
   --uri="${SERVICE_URL}/api/weekly-run" \
   --http-method=POST \
   --headers="X-Cron-Secret=ここにCRON_SECRETを入力" \
   --oidc-service-account-email="scheduler-invoker@$(gcloud config get-value project).iam.gserviceaccount.com"
 ```
 
-`0 20 * * 5` = 毎週金曜 20:00（JST）
+`0 8 * * 6` = 毎週土曜 08:00（JST）
 
 ---
 
